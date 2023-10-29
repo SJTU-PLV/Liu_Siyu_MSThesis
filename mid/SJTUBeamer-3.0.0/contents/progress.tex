@@ -1,0 +1,69 @@
+% !TeX encoding = UTF-8
+% !TeX root = ../main.tex
+
+%% ------------------------------------------------------------------------
+%% Copyright (C) 2021,2022 SJTUG
+%% 
+%% SJTUBeamer Example Document by SJTUG
+%% 
+%% SJTUBeamer Example Document is licensed under a
+%% Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+%% 
+%% You should have received a copy of the license along with this
+%% work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+%% -----------------------------------------------------------------------
+
+\section{研究进展}
+
+\begin{frame}{研究工作进展}
+  本课题研究工作按计划有序开展：
+  \vspace{2ex}
+  \begin{itemize}
+    \item 定义\textcolor{Maroon}{源语言}及\textcolor{Maroon}{目标语言}。
+      \begin{itemize}
+        \item 使用\textcolor{Maroon}{PCF}（Programming Computable Functions）作为源程序语言。
+        \item 将直接风格PCF的源程序进行CPS转换。
+        \item 使用简化版的LLVM IR作为目标SSA语言。
+      \end{itemize}
+    \item \textcolor{Maroon}{CPS到SSA}的转换算法设计及实现。
+    \item 用模拟技术对转换算法进行正确性\textcolor{Maroon}{验证}。
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{CPS $\Rightarrow$ SSA转换算法}
+  定义函数\textcolor{Maroon}{$\mathcal{G}$}：
+  \begin{enumerate}
+    \item \textcolor{MidnightBlue}{初始：} CPS程序是待转换的源程序，SSA程序只有一个空的主函数。
+    \item \textcolor{MidnightBlue}{$\mathcal{G}$递归翻译CPS程序：}
+    \begin{itemize}
+        \item 将新生成的程序组成部分（基本块，指令等）放入SSA程序。
+        \item 更新函数的参数。
+    \end{itemize}
+    \item \textcolor{MidnightBlue}{转换完成：} 返回当前的SSA程序。  
+\end{enumerate}
+\vspace{1ex}
+\small
+\begin{columns}[c]
+  \textcolor{MidnightBlue}{部分程序结构转换：}
+  \begin{column}{0.6\textwidth}
+  % \centering
+  \begin{columns}
+    \column{0.6\columnwidth}
+    变量绑定 \\
+    延续 \\
+    多处变量应用到同一延续上 \\
+    \column{0.05\columnwidth}
+    $\Rightarrow$ \\
+    $\Rightarrow$ \\
+    $\Rightarrow$ \\
+    \column{0.3\columnwidth}
+    对新变量赋值 \\
+    新的基本代码块 \\
+    $\Phi$节点 \\
+  \end{columns}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+
