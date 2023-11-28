@@ -1,0 +1,35 @@
+% !TEX root = ../main.tex
+
+\begin{abstract}[zh]
+  编译器作为重要的系统软件，其效率与正确性一直是研究者们不断探讨的方向。
+  随着形式化方法理论和工具的发展，编译器的形式化验证成为了确保其正确性的重要方法。
+  静态单赋值（Static Single Assignment, SSA）形式作为一种中间语言被现代主流编译器基础设施广泛采用，
+  因为它能够实现许多基于数据流分析的编译优化。
+  本文研究了如何将关键的函数式语言编译过程与静态单赋值中间语言通过形式化方法联系起来，
+  从而在确保编译正确性的情况下使函数式语言的编译器能够充分利用静态单赋值的优势。
+  现有的函数式编译器一般会将源程序编译为延续传递风格（Continuation Passing Style, CPS），
+  从而得到明确的控制流。
+  在本文中，我们设计了从延续传递风格的函数式程序到静态单赋值中间语言的转换算法，
+  并对该转换算法进行了基于模拟技术的形式化验证。
+  建立了这样的联系，才能够使经验证的函数式编译器复用基于静态单赋值的程序分析与编译优化，
+  从而实现函数式编译器可靠性与效率的双重保障。
+
+  本文还以代表性的基础函数式编程语言PCF（Programming Computable Functions）为研究对象，
+  应用该经验证的编译过程构建出了PCF语言到LLVM中间语言的函数式编译器。
+  具体而言，首先需要将直接风格的PCF源语言转换为延续传递风格，再编译到静态单赋值中间语言。
+  我们对这条编译链的正确性进行形式化验证，并将它与LLVM中间语言连接起来，
+  从而为构建经验证的高性能、高可靠函数式编译器提供了基础。
+  本文涉及的所有算法、定义和定理证明均在Coq定理证明器中实现。
+\end{abstract}
+
+\begin{abstract}[en]
+  Shanghai Jiao Tong University (SJTU) is a key university in China. SJTU was
+  founded in 1896. It is one of the oldest universities in China. The University
+  has nurtured large numbers of outstanding figures include JIANG Zemin, DING
+  Guangen, QIAN Xuesen, Wu Wenjun, WANG An, etc.
+
+  SJTU has beautiful campuses, Bao Zhaolong Library, Various laboratories. It
+  has been actively involved in international academic exchange programs. It is
+  the center of CERNet in east China region, through computer networks, SJTU has
+  faster and closer connection with the world.
+\end{abstract}
