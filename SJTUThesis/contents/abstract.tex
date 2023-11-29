@@ -3,8 +3,8 @@
 \begin{abstract}[zh]
   编译器作为重要的系统软件，其效率与正确性一直是研究者们不断探讨的方向。
   随着形式化方法理论和工具的发展，编译器的形式化验证成为了确保其正确性的重要方法。
-  静态单赋值（Static Single Assignment, SSA）形式作为一种中间语言被现代主流编译器基础设施广泛采用，
-  因为它能够实现许多基于数据流分析的编译优化。
+  静态单赋值（Static Single Assignment, SSA）形式作为一种中间语言（Intermediate Representation, IR）
+  被现代主流编译器基础设施广泛采用，因为它能够实现许多基于数据流分析的编译优化。
   本文研究了如何将关键的函数式语言编译过程与静态单赋值中间语言通过形式化方法联系起来，
   从而在确保编译正确性的情况下使函数式语言的编译器能够充分利用静态单赋值的优势。
   现有的函数式编译器一般会将源程序编译为延续传递风格（Continuation Passing Style, CPS），
@@ -16,20 +16,42 @@
 
   本文还以代表性的基础函数式编程语言PCF（Programming Computable Functions）为研究对象，
   应用该经验证的编译过程构建出了PCF语言到LLVM中间语言的函数式编译器。
-  具体而言，首先需要将直接风格的PCF源语言转换为延续传递风格，再编译到静态单赋值中间语言。
+  具体而言，首先需要将直接风格的PCF源程序转换为延续传递风格，再编译到静态单赋值中间语言。
   我们对这条编译链的正确性进行形式化验证，并将它与LLVM中间语言连接起来，
   从而为构建经验证的高性能、高可靠函数式编译器提供了基础。
   本文涉及的所有算法、定义和定理证明均在Coq定理证明器中实现。
 \end{abstract}
 
 \begin{abstract}[en]
-  Shanghai Jiao Tong University (SJTU) is a key university in China. SJTU was
-  founded in 1896. It is one of the oldest universities in China. The University
-  has nurtured large numbers of outstanding figures include JIANG Zemin, DING
-  Guangen, QIAN Xuesen, Wu Wenjun, WANG An, etc.
-
-  SJTU has beautiful campuses, Bao Zhaolong Library, Various laboratories. It
-  has been actively involved in international academic exchange programs. It is
-  the center of CERNet in east China region, through computer networks, SJTU has
-  faster and closer connection with the world.
+  As essential components of system software, compilers have been the 
+  subject of continuous exploration by researchers regarding both 
+  efficiency and correctness. With the development of the theory and tools
+  for formal methods, formal verification of compilers has emerged as a 
+  crucial approach to ensuring their correctness. 
+  Static Single Assignment (SSA) form, widely adopted as an intermediate representation
+  in modern mainstream compiler infrastructures, facilitates 
+  numerous compilation optimizations based on data-flow analysis. 
+  This paper investigates how to formally connect the key processes 
+  of functional language compilation with SSA intermediate language, 
+  enabling functional language compilers to harness the advantages of SSA 
+  while ensuring compilation correctness. 
+  Existing functional compilers often translate source programs into 
+  Continuation Passing Style (CPS) to achieve explicit control flow. 
+  In this paper, we design a transformation algorithm from CPS functional programs 
+  to SSA intermediate language and formally verify this transformation algorithm 
+  using simulation methods. Establishing such a connection enables 
+  verified functional compilers to leverage SSA-based program analysis 
+  and compilation optimizations, ensuring both reliability and efficiency in 
+  functional compiler implementations.
+    
+  Furthermore, this paper takes the representative foundational functional 
+  programming language, PCF (Programming Computable Functions), 
+  as the source language. Applying the verified compilation process, 
+  we construct a functional compiler for translating PCF programs to 
+  LLVM intermediate language. Specifically, it involves the initial transformation
+  of the direct-style PCF source code into CPS, followed by compilation into the SSA. 
+  We formally verify the correctness of this compilation chain and connect it to the LLVM IR. 
+  This establishes the groundwork for constructing a verified, high-performance, 
+  and highly reliable functional compiler. All the algorithms, definitions, 
+  and theorem proofs involved in this paper are implemented within the Coq theorem prover.
 \end{abstract}
