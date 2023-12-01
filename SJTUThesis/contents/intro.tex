@@ -2,12 +2,63 @@
 
 \chapter{绪论}
 
-这是 SJTUThesis 的示例文档，基本上覆盖了模板中所有格式的设置。建议大家在使用模
-板之前，除了阅读《SJTUThesis 使用文档》，这个示例文档也最好能看一看。
 
 \section{引言}
 
-\section{相关背景}
+编译器的形式化验证已被证实可以有效保证编译器的正确性。
+一个著名的例子是经过验证的C编译器CompCert~\cite{leroy2009formally}，
+它将C语言的一个有代表性的重要子集编译到了支持多种处理器架构的汇编代码（包括PowerPC、ARM、X86和RISC-V）。
+其编译过程的正确性（即目标汇编程序保存了源C程序的语义）经过了形式化验证，并在Coq定理证明器中实现。
+
+延续传递风格（Continuation-Passing Style, CPS）是一种函数式程序的中间语言（Intermediate Representation, IR），
+它明确了函数式程序的控制流，从而为程序基于控制流的分析和优化提供了便利。
+延续传递风格的中间语言在函数式程序的编译器中被
+广泛采用\cite{belanger-cpp2013,dargaye2009verification,zoe-oopsla2021,zoe-icfp2021,wang-esop2016}。
+然而，这也意味着经验证的函数式编译器不能直接得到主流编译器基础设施（例如LLVM和GCC）的支持。
+这些主流编译器基础设施采用静态单赋值（Static Single Assignment, SSA）形式的中间语言。 
+SSA中间语言在工业编译器中大大流行，因为它可以通过强制让每个变量只能被赋值一次来实现
+便捷而准确的数据流分析（Data-Flow Analysis, DFA），进而实现各种基于数据流分析的激进优化。
+许多流行的命令式编程语言（例如Rust~\cite{balasubramanian2017system}和Swift~\cite{zhang2012swift}）
+使用这些编译器基础设施作为其后端，生成性能优越的代码~\cite{lattner2006introduction}。
+一些工业级的函数式编译器也开始采用SSA形式的中间语言。例如，SML-New Jersey的
+新版本已经将其后端转向了LLVM~\cite{farvardin2020new}。
+
+在本文中，我们研究了如何构建基于SSA中间语言的经验证的函数式语言编译器。
+具体而言，我们设计并验证了从CPS到SSA的转换算法，以便在经验证的编译器领域中将
+传统基于CPS的函数式编译器与基于SSA中间语言上工作的主流编译器后端连接起来。
+尽管研究人员已经探讨了CPS和SSA程序结构之间的对应关系~\cite{appel1998ssa,ssabook}，
+和相互转换~\cite{farvardin2020new,kelsey1995correspondence}，
+但如何对转换算法进行形式化验证仍然是待解决的问题。
+
+本文的主要贡献总结如下：
+
+\begin{itemize}
+    \item
+    我们的主要贡献是设计和验证了从CPS到SSA的转换算法。该转换过程的源语言是代表性的
+    函数式语言PCF\cite{plotkin1977lcf}，我们首先需要将其转换为CPS形式。
+    转换算法的SSA目标语言是LLVM IR的一种简化版本，保留了LLVM IR的基本结构。
+    该转换是基于CPS和SSA结构上的对应关系设计的~\cite{appel1998ssa,kelsey1995correspondence}。
+    我们为PCF和SSA语言定义了小步操作语义，使用基于模拟的方法证明目标程序实现了
+    源程序的语义保存。据我们所知，这是第一个经过验证的从CPS函数式程序到SSA的转换。
+    
+    \item 
+    我们还利用该经验证的编译链构建了PCF语言的编译器原型。它是部分经过形式化验证的，
+    为未来构建更复杂更完整的经验证函数式语言编译器打下基础。
+    具体而言，我们首先实现并验证了直接风格PCF语言的CPS转换，并将它连接到经验证的CPS到SSA的编译过程。
+    然后，我们通过Vellvm提供的抽象语法（Vellvm是一个经过验证的LLVM基础设施~\cite{zakowski2021modular}），
+    将SSA中间语言转换为LLVM IR。
+    
+\end{itemize}
+
+在本章接下来的内容中，我们首先在\ref{sec:background}节介绍必要的相关背景知识，
+并在\ref{sec:related}节讨论了领域内与本课题相关的工作。
+在第\ref{ch:overview}章中，我们简要介绍了该部分经验证的PCF编译器原型。
+我们在第\ref{ch:trans}章中讨论了CPS转换和CPS到SSA的转换算法设计，
+并在第\ref{ch:verify}章中对该编译链进行形式化验证。
+本文工作在Coq中的实现和评估将在第\ref{ch:implement}章中介绍。
+最后,我们在第\ref{ch:summary}章中对本文内容进行总结。
+
+\section{相关背景} \label{sec:background}
 
 \subsection{函数式编程}
 
@@ -15,7 +66,7 @@
 
 \subsection{基于模拟技术的编译器验证}
 
-\section{国内外研究现状}
+\section{相关工作} \label{sec:related}
 
 \subsection{SML-New Jersey基于LLVM编译器后端的版本}
 
@@ -26,7 +77,5 @@
 \subsection{CompCertSSA}
 
 \subsection{经验证的LLVM IR: Vellvm}
-
-\section{本文主要贡献}
 
 
