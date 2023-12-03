@@ -60,11 +60,209 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 
 \section{相关背景} \label{sec:background}
 
+在本节中，我们将对该课题的相关背景进行介绍。
+本文工作涉及函数式编程、编译器常用中间语言形式以及编译器形式化验证方法等方向。
+首先，我们会介绍函数式编程的概念及其特性。
+然后，我们将说明CPS形式是如何帮助函数式程序显式地表示控制流的，
+并介绍了静态单赋值中间语言的相关特性以及CPS和SSA结构之间的对应关系。
+接下来，我们介绍了在经验证的编译器CompCert中提出的基于模拟技术进行编译器验证的框架~\cite{leroy2009formally}。
+
 \subsection{函数式编程}
+
+函数式编程（Functional Programming）是一种通过应用和组合函数来构建程序的编程范式，
+以$\lambda$演算（$\lambda$-Calculus）作为其数学基础~\cite{church1985calculi}。
+传统命令式编程中，计算通过执行程序语句序更新程序状态来实现。
+相比之下，函数式编程中程序由包含函数定义和应用的表达式构成，而计算通过对表达式求值来实现。
+函数式程序的一大特点是函数可以作为参数传递，或者被其他函数返回，形成所谓的高阶函数~\cite{sussman1998scheme}。
+此外，纯粹函数式程序的执行不会引起改变程序状态的副作用。
+这些特点使得函数式程序设计语言编写的程序更加简洁、安全和易于验证~\cite{hudak1989conception}，
+因此在并发编程、系统内存编程等方面获得了成功应用。
+
+在学术界和工业界中，函数式编程的应用日趋广泛。
+除了Haskell~\cite{o2008real}等纯函数式语言，OCaml、Erlang、Scala~\cite{cesarini2009erlang, odersky2014unifying}
+等语言都对函数式编程有内生的支持，且诸多命令式编程语言如C++和Rust也在积极的引入函数式编程机制。
+本文研究的函数式编程语言是学术界有广泛影响力的PCF（Programming Computable Functions）。
+由于PCF可以看作是工业用函数式编程语言的核心，本文的研究结果可被推广至其他函数式语言。
+关于PCF语言的更多特性将在第\ref{sec:cps}节中详述。
 
 \subsection{延续传递风格与静态单赋值}
 
-\subsection{基于模拟技术的编译器验证}
+函数式程序的形式有很多种，如直接风格（Direct Style）和延续传递风格（CPS）。
+图~\ref{cpsdirect}展示了同样含义的函数式程序在这两种不同表示风格下的例子。
+CPS的关键特性在于通过延续明确地表示程序的控制流。
+CPS中的延续（Continuation）指的是当前执行节点后所有剩余计算的函数，
+该函数需要把当前计算得到的结果作为其输入。
+具体来说，CPS函数需要将延续作为额外的参数传入，
+当运行该函数得到计算结果后，程序通过调用该延续来传递这个值，也就是``返回''该结果。
+以图~\ref{fig:cps2}为例，函数$h$在CPS中的延续参数为$k$，在得到最终结果$z$之后，
+程序调用$(k\; z)$以返回$z$，并执行$k$所代表的剩余计算。
+当调用CPS函数时，调用者需要提供一个延续函数来表示剩余计算，且在CPS中所有中间结果、控制流中的控制点都需要被明确命名。
+这些特点导致用户直接用CPS形式编写代码较为困难，但是由于明确表示的控制流利于程序分析和优化，
+CPS是函数式语言编译器中常见的中间表示形式。
+
+\begin{figure}
+    % \vspace{-0.3cm}
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \flushright
+    % \small
+     \begin{equation}
+        \nonumber
+        \begin{aligned}
+        &  \mathbf{function}\; h(x,y) = \\
+        & \quad (x*x)\; +\; (y*y) \\
+        \end{aligned}
+    \end{equation}
+    \caption{Direct Style}
+        \label{fig:ori2}
+    \end{subfigure}
+ %   \hfill
+    \begin{subfigure}[b]{0.6\textwidth}
+        \flushleft
+        % \small
+        \begin{equation}
+            \nonumber
+            \begin{aligned}
+            & \mathbf{function}\; h(x,y,k)= \mathbf{let}\; x_1=x*x\; \mathbf{in} \\
+            &  \quad   \mathbf{let}\; y_1=y*y\; \mathbf{in}\; (\mathbf{let}\; z=x_1+y_1\; \mathbf{in}\; (k\; z)) \\
+            \end{aligned}
+        \end{equation}
+        \caption{CPS}
+        \label{fig:cps2}
+    \end{subfigure}
+    \caption{直接风格和CPS形式的示例函数式程序}\label{cpsdirect}
+  \end{figure}
+
+Plotkin~\cite{plotkin1977lcf}、Danvy和Nielsen\cite{danvy2007one}等人研究了将直接风格的函数式程序转换为CPS程序的方法。
+其中Plotkin的方法需要后续进行管理性缩减（Administrative Reduction），以去除冗余的$\lambda$结构。
+Felleisen等人提出了另一种方法非组合式的方法，其基于$\lambda$-演算的语义。
+Danvy和Nielsen将这两种方法联系起来，可以只通过一步转换完成，不需要在后续过程中进行管理性缩减。
+
+静态单赋值（SSA）是命令式语言编译器中一种广泛使用的中间语言类型。
+在SSA中，每个变量只能在一处被赋值，且被使用之前必须已经被赋值。
+这种性质很接近函数式语言中的名字绑定（Name Binding）~\cite{ssabook}。
+变量被划分为不同的版本，新版本的变量往往使用原名加下标来表示，以使每个定义得到自己的版本。
+$\phi$节点（$\phi$-nodes）作为特殊的程序语句被插入到基本代码块的开头，
+从而按照前驱基本块的名字生成新变量的赋值语句。
+这样一来，变量的使用定义链（Use-def Chains）更加清晰，从而使许多编译器优化算法
+在SSA中间语言上能够更好地实现，例如常量传播、无用代码消除、寄存器分配等~\cite{ssabook,kelsey1995correspondence}。
+作为示例，图~\ref{ssacfg}展示了一个SSA程序的控制流图（Control-Flow Graph）。
+其中，基本代码块$b_2$的前驱基本块可以是$b_1$或$b_2$本身。
+不同的前驱基本块对变量$y$有不同的赋值，在$b_1$和$b_2$中变量$y$被赋予了不同版本的名称。
+基本块$b_2$开头的$\phi$节点将$y_1$和$y_3$作为参数，根据执行时控制流的实际前驱基本块来
+选择正确的版本赋值给新的变量$y_2$。
+
+LLVM IR就是一种基于SSA的中间代码。它作为一种高层次的汇编语言，提供了编译系统的中间层，
+使得不同语言可以相互连接起来，复用其后端优化~\cite{lattner2006introduction}。
+除了LLVM，还有很多编译器是基于SSA的，例如GCC编译器的中间语言GIMPLE~\cite{callanan2007extending}、
+面向微软.NET平台的即时编译中间语言CIL（Common Intermediate Language）~\cite{thai2003net}等。
+
+\begin{figure}[htbp]
+    \centering
+    \input{figures/ssacfg}
+    \caption{SSA程序的控制流图示例}\label{ssacfg}
+\end{figure}
+
+Appel等人~\cite{appel1998ssa}发现SSA也是一种函数式语言：$\lambda$演算和SSA虽然有不同的形式，
+但它们所做的工作其实是相同的。L. Beringer~\cite{ssabook}给出了SSA的函数式表示，
+将SSA中的相关术语与函数式编程中的概念联系起来。
+例如，函数式语言中的$let$绑定对应着SSA中的赋值、绑定变量的词法作用域对应着SSA中的可支配区域。
+$let$绑定与变量定义点之间的对应关系还延续到了程序结构的其他方面。
+与命令式语言中的返回地址或函数指针相似，延续指定了当前代码片段求值完成后程序下一步该如何执行。
+SSA中的控制流图对应着函数式编程中的函数，虽然顶层延续的参数在控制流图中并不是明确可见的，
+但它对应一个命令式调用中用来保存返回地址的地方。
+Kelsey~\cite{kelsey1995correspondence}通过将CPS中的$\lambda$进行标注来区分完整过程、跳转、延续，
+进而从语法上将被这种标注的CPS程序转换为一种SSA程序，但是这种SSA语言与当今主流编译器的SSA中间语言有较大差距。
+
+\subsection{编译器形式化验证}
+
+我们使用CompCert~\cite{leroy2009formally}基于模拟（Simulation）技术的形式化验证框架来证明转换过程的正确性。
+经过形式化验证的C语言子集编译器CompCert是由INRIA的Xavier Leroy领导开发的，在Coq定理证明工具中实现。
+
+CompCert已被应用于诸如核电站控制软件和飞行控制系统的开发。
+清华大学王生原、尚书等人设计并实现了基于CompCert的L2C编译器~\cite{shang2017key}，被用于安全关键的工业领域。
+L2C的源语言是被广泛用于安全关键的工业领域（高铁、核电站等）的 Lustre，
+这些类型的应用对开发工具本身的安全性要求很高。它的目标语言是ComperCert中使用的C子集Clight。
+南京大学冯新宇等人针对并发程序进行了单独编译验证~\cite{jiang2019towards}。他们提出了独立于语言的验证框架，
+将顺序程序与无竞赛并发程序编译器验证工作联系起来，从而使针对顺序程序的编译器验证工作可以被重用。
+使用这种框架，他们建立了CASCompCert。它扩展了ComperCert，可以对无竞赛Clight并发程序的单独编译进行验证，
+且允许将并发Clight模块与包含良性竞赛的同步原语的x86-TSO实现进行连接。
+
+CompCert提供了一套基于模拟技术验证编译过程正确性的理论和框架。该框架将编译过程的正确性定义为
+语义保存性质（Semantic Preservation Property），即目标程序的行为应该与源程序的行为一致。
+我们将程序的行为（Behaviors）描述为由小步操作语义（Small-Step Operational Semantics）生成的轨迹（Trace），
+以便直接推导出编译器的正确性证明。根据CompCert中对语义保存性质的讨论，
+通过为安全的源程序建立后向模拟（Backward Simulaion），可以证明语义保存性质。
+
+接下来，我们会介绍一些概念来说明什么是安全程序的后向模拟。
+可以通过程序语言的语义将可观察行为（Observable Behaviors）与程序关联起来。
+程序的可观察行为可以分为终止（Termination）、发散（Divergence）和出错（Going wrong）。
+如果用$P_1$表示源程序，$B$表示可观察行为，那么$P_1 \Downarrow B$表示执行程序$P_1$获得的可观察行为为$B$。
+同样的表示方法也可以应用于目标程序。在CompCert框架中，仅对不会出错的安全的源程序提供正确性保证。
+如果我们将编译过程表示为$\mathcal{T}$函数，则经过转换得到的目标程序可以表示为$\mathcal{T}(P_1)$。
+编译安全程序的正确性可以描述为目标程序的行为是可接受的源程序行为。
+那么，安全源程序的后向模拟可以表示为：如果$P_1$是一个安全程序，
+则对于所有的可观察行为$B$，$\mathcal{T}(P_1) \Downarrow B \Longrightarrow P_1 \Downarrow B$。
+
+然而，直接证明后向模拟是比较困难的。可以先建立从安全源程序到目标程序的前向模拟（Forward Simulation），
+再根据目标程序的确定性和前向模拟来推导出后向模拟。
+安全源程序的前向模拟可以表示为：如果$P_1$是一个安全程序，则对于所有的$B$，
+$P_1 \Downarrow B \Longrightarrow \mathcal{T}(P_1) \Downarrow B$。
+由于目标程序是确定性的（Deterministic），它只与一种行为相关联。
+因此，目标程序不会具有$P_1$没有的额外行为。在这种情况下，可以从前向模拟中导出安全程序的后向模拟。
+
+为了证明源语言$L_1$转换为目标语言$L_2$的编译过程满足前向模拟性质，
+关键在于建立程序状态$S_1$和$S_2$之间的不变式（Invariant）$S_1\sim S_2$，
+并证明它在源程序和目标程序的执行过程中始终成立。
+按照CompCert的方法，我们首先需要为$L_1$和$L_2$定义操作语义。
+对于任何源程序$P_1$和目标程序$P_2$，我们需要证明$P_1$和$P_2$的初始状态满足不变量$\sim$。
+然后，我们需要证明它们的内部执行步骤始终可以通过$\sim$相关联。
+也就是说，假设$S_1\sim S_2$，源程序的状态在一步执行后从$S_1$转换到$S'_1$，
+那么目标程序状态从$S_2$转换到某个$S'_2$，需要保证在转换后$S'_1\sim S'_2$成立。
+根据从$S_2$到$S'_2$的转换步骤数量，可以将模拟图（Simulation Diagram）分为以下几种：
+
+\begin{figure}[ht]
+    % \vspace{-10pt}
+    \centering
+    \begin{subfigure}[b]{0.26\textwidth}
+        % \flushleft
+        \includegraphics[width=1\linewidth]{figures/plusstep.pdf}
+        \caption{多步模拟}
+        \label{fig:plus}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.52\textwidth}
+        % \flushright
+        \includegraphics[width=1\linewidth]{figures/starstep2.pdf}
+        \caption{星形模拟}
+        \label{fig:star}
+    \end{subfigure}
+    \caption{不同类型的模拟图}\label{simustep}
+\end{figure}
+
+\begin{itemize}
+    \item 一步模拟（Lock-Step Simulation）表示$S_2$经过一步转换到达$S'_2$状态。
+        然而，对于大多数转换算法来说，一步模拟的前提要求太严格了，我们需要对其进行放宽。
+    \item 多步模拟（Plus Simulation）表示$S_2$经过一步或多步转换到达$S'_2$（如图~\ref{fig:plus}）。
+        有时，从$S_1$到$S'_1$的转换对于状态$S_2$没有任何影响，比如删除冗余代码。
+        因此，在某些情况下，多步模拟的条件也需要放松。
+    \item 星形模拟（Star Simulation）表示$S_2$经过零步或一步或多步转换到达$S'_2$状态（如图~\ref{fig:star}）。
+        在这种条件下，可能会出现一种违反语义保存性质的情况：源程序发散，而目标程序保持在$S_2$状态，
+        它们之间的状态仍然始终满足$\sim$不变式。为了防止出现这种``无限驻留''问题，我们需要
+        为源程序的状态定义一个度量函数$M$，它随着源程序的执行过程严格减小。
+        增添了度量函数$M$相关的限制，我们就能通过模拟保存源程序的发散行为了。
+\end{itemize}
+
+正如我们将在第~\ref{ch:verify}章中讨论的那样，CPS转换的前向模拟满足多步模拟性质，
+而对于CPS到SSA的转换，我们需要使用星形模拟。根据上述模拟图性质以及
+源程序和目标程序初始状态的对应关系，我们可以推导出安全程序的前向模拟。
+结合目标语言的确定性，即可推导出安全程序的后向模拟。
+
+由于语义保存性质是可传递的（Transitively Composable），
+我们可以先分别证明各个编译过程的语义保存性质，然后将结果组合起来推导出整个编译过程的正确性。
+例如，如果编译过程$\mathcal{T}$被分解为两个转换阶段$\mathcal{T}_1$和$\mathcal{T}_2$，
+$\mathcal{T}$可以被视为它们的组合。对于一个安全的程序$P$，如果没有发生编译时错误（Compiler-Time Error），
+$\mathcal{T}(P) = \mathcal{T}_2(\mathcal{T}_1(P))$。
+如果我们可以验证$\mathcal{T}_1$和$\mathcal{T}_2$的正确性，那么$\mathcal{T}$也得到了验证。
 
 \section{相关工作} \label{sec:related}
 

@@ -1,0 +1,40 @@
+% \documentclass{article}
+% \usepackage{tikz}
+% \usetikzlibrary{chains,shadows.blur}
+
+% \begin{document}
+\begin{tikzpicture}[auto,
+%   node distance = 12mm,
+%   start chain = going right,
+  box/.style = {draw,rounded corners,blur shadow,fill=white,
+        align=center}]
+ \small
+ \node[box] (b1) at(0,0)    {$v_1 \leftarrow 1$\\ 
+                    $z_1 \leftarrow 8$ \\ 
+                    $y_1 \leftarrow 4$};      
+ \node[box] (b2) at(3,0)    {$y_2 \leftarrow \phi(y_1,y_3)$\\
+                    $x_1 \leftarrow 5 + y_2$ \\
+                    $y_3 \leftarrow x_1 * z_1$ \\
+                    $x_2 \leftarrow x_1 - 1$ \\
+                    $\mathbf{if}\; x_2 = 0$};      
+ \node[box] (b3) at(6.5,0)    {$w_1 \leftarrow v_1 +y_3$\\ 
+                    $\mathbf{return}\; w_1$};  
+ \node at(4.0,1.5) {false};
+ \node at(4.8,0.3) {true};
+
+ \coordinate (b1n) at ([yshift=-31] b1);
+ \coordinate (b2n) at ([yshift=-43] b2);
+ \coordinate (b3n) at ([yshift=-25] b3);
+
+ \node at (b1n)  {$b_1$};
+ \node at (b2n)  {$b_2$};
+ \node at (b3n)  {$b_3$};
+ 
+ \begin{scope}[rounded corners,-latex]
+  \path (b2.60) edge[bend right=50] (b2.120)
+        (b1) edge (b2) (b2) edge (b3) ;
+%   \draw (b3.230) -- ++(0,-0.3) -| ([xshift=-5mm]b2.west) |-
+%   ([yshift=3mm]b2.130) -- (b2.130);
+ \end{scope}
+\end{tikzpicture}
+% \end{document}      
