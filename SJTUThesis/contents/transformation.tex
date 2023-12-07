@@ -4,9 +4,218 @@
 
 \section{源语言：CPS形式的PCF语言} \label{sec:cps}
 
+PCF（Programming Computable Functions）是一种被广泛应用于研究的函数式语言~\cite{plotkin1977lcf}。
+尽管PCF是一种小规模的语言，但它是图灵完备的，即所有可计算的函数都可以表示为PCF程序。
+把它作为该编译框架的源语言，不会使算法和验证过于复杂而无法完成，也能够说明关键问题。
+在本节中，我们定义了直接风格和CPS形式PCF语言的语法和小步操作语义。
+我们还展示了将直接风格PCF转换为CPS形式的算法。
+
 \subsection{源语言的语法和语义}
 
+本文中介绍的PCF语言来自Dowek和L{'e}vy的工作~\cite{dowek2010introduction}。
+它包括基本的$\lambda$-演算、算术运算表达式、条件表达式和不动点（Fixed Point）。PCF及其CPS形式的语法定义如图~\ref{pcfsyntax}所示。
+
+\begin{figure}[htbp]
+        \centering
+        \begin{subfigure}[b]{0.4\textwidth}
+            \flushright
+        \begin{equation}
+            \nonumber
+            \begin{aligned}
+                op\, := &\; +\; |\; -\; | \; \times \; |\; \div \\
+                t\, := &\; i\; |\; x\; |\; t_1\; t_2\; |\; \mathbf{ifz}\; t_1\; t_2\; t_3 \\
+                & |\; op\; t_1\; t_2 \\
+                & |\; \mathbf{let}\; x=t_1\; \mathbf{in}\; t_2 \\
+                & |\; \mathbf{fix}\; f\; x\; t
+            \end{aligned}
+        \end{equation}
+        \caption{直接风格的PCF语言语法}\label{directpcf}
+        \end{subfigure}
+       % \hfill
+        \begin{subfigure}[b]{0.5\textwidth}
+            \flushleft
+        \begin{equation}
+            \nonumber
+            \begin{aligned}
+                v\, := &\; i\; |\; x \\
+                t\, := &\; \mathbf{letval}\; x=v\; \mathbf{in}\; t\; |\; k\; v\; |\; \mathbf{ifz}\; v\; t_1\; t_2 \\
+                & |\; f\; k\; v\; |\; \mathbf{letop}\; x=op\; x_1\; x_2\; \mathbf{in}\; t \\
+                & |\; \mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2 \\
+                & |\; \mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2 
+            \end{aligned}
+        \end{equation}
+        \caption{CPS形式的PCF语言语法}\label{cpspcf}
+    \end{subfigure}
+    \caption{PCF语言语法}\label{pcfsyntax}
+    \end{figure}
+
+最基本的PCF代码项（Term）包含自然数$i$和变量$x$。将代码项$t_1$应用到代码项$t_2$上表示为$t_1\; t_2$。
+我们使用$\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2$表示在$t_2$中将变量$x$替换为$t_1$的值。
+PCF中的条件表达式记作$\mathbf{ifz}\; t_1\; t_2\; t_3$。如果$t_1$的值为0，则整个代码项规约到$t_2$。
+否则，它将规约到$t_3$。PCF中的不动点代码项是$\mathbf{fix}\; f\; x\; t$，其中$t$中可能出现$f$。
+例如，图~\ref{factpcf}中展示了使用直接风格的PCF实现阶乘功能并应用到参数2的程序。
+
+CPS形式的PCF语言遵循Kennedy提出的CPS风格函数式程序结构~\cite{kennedy2007compiling}。
+值$v$在CPS项中可以通过$\mathbf{letval}\; x = v\; \mathbf{in}\; t$语句引入。$k\; v$将延续（Continuation）$k$应用于参数$v$。
+$f\; k\; v$将函数$f$应用于参数$v$，并传递延续变量$k$以接受此调用返回的结果。
+语句$\mathbf{letop}\; x = op\; x_1\; x_2\; \mathbf{in}\; t$将变量$x$在项$t$中绑定为该二元运算的结果。
+通过$\mathbf{letcont}\; k\; x = t_1\; \mathbf{in}\; t_2$引入局部延续（Local Continuation）$k$，其中$t_1$是延续$k$的延续体（Body）。
+$\mathbf{letfun}\; f\; k\; x = t_1\; \mathbf{in}\; t_2$构造一个返回延续（Return Continuation）为$k$的函数$f$。
+图~\ref{factcps}描述了CPS形式的PCF语言中阶乘函数的实现及对参数2的应用，其中每个计算步骤都是被显式命名的。
+可以看到，顶层延续变量$k_{init}$接受整个程序返回的结果，并由其上下文绑定。
+
+\begin{figure}[htbp]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+            \flushright
+        % \small
+        \begin{equation}
+            \nonumber
+            \begin{aligned}
+            & (\mathbf{fix}\; fact\; x \\
+            & \quad \mathbf{ifz}\; x\; 1 \\
+            & \quad\quad (x*(fact\; (x-1)))) \\
+            & 2
+            \end{aligned}
+        \end{equation}
+        \caption{直接风格的PCF阶乘程序}\label{factpcf}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.68\textwidth}
+            \flushleft
+            % \small
+        \begin{equation}
+            \nonumber
+            \begin{aligned}
+            & \mathbf{letfun}\; fact\; k\; x = (\mathbf{ifz}\; x\; (\mathbf{letval}\; x_1=1\; \mathbf{in}\; (k\; x_1))\\
+            & \quad (\mathbf{letval}\; x_2=1\; \mathbf{in}\; (\mathbf{letop}\; x_4=x-x_2\; \mathbf{in} \\
+            & \quad\quad \mathbf{letcont}\; k_1\; z= (\mathbf{letop}\; x_3=x*z\; \mathbf{in}\; (k\; x_3))\\
+            & \quad\quad\quad  \mathbf{in}\; fact\; k_1\; x_4)))\; \mathbf{in} \\
+            & (\mathbf{letval}\; x_5=2\; \mathbf{in}\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (fact\; k_2\; x_5))) \\
+            \end{aligned}
+        \end{equation}
+        \caption{CPS形式的PCF阶乘程序}\label{factcps}
+        \end{subfigure}
+    \caption{使用PCF语言实现阶乘程序}\label{factpcfcps}
+    \end{figure}
+
+接下来，我们需要为以上所介绍的PCF语言提供小步操作语义。
+$S\rightarrow S'$表示执行一步操作可以使程序从初始状态$S$到达状态$S'$。
+在直接风格的PCF程序中，程序状态之间的转换步骤表示为$(t_{pcf},ctx)\rightarrow (t'_{pcf},ctx')$。
+$t_{pcf}$表示的是正在被求值（Evaluate）的表达式的PCF代码项。
+$ctx$是一个包含代码项序列的上下文（Context），用于在当前$t_{pcf}$的求值完成后进行下一步执行操作。
+当$ctx = ctx_{stop}$时，程序执行在$t_{pcf}$求值完成后即可结束。否则，当$ctx = ctx_{seq}\; t\; ctx$，
+表示$t_{pcf}$的值将作为后续代码项$t$的参数，程序继续执行。经过一步转换之后，
+新的程序状态包含了更新后的PCF代码项$t'_{pcf}$和新的上下文$ctx'$。转换规则如图~\ref{pcfopsem}所示。
+
+$\mathbf{let}$表达式在$t_2$中用代码项$t_1$的值替换变量$x$。
+因此，我们首先对$t_1$进行求值并将当前求值完成后下一步需要处理的代码项追加在上下文$ctx$中。
+然后，在得到$t_1$的值后，我们将$t_2$中的变量$x$进行替换。当将不动点应用于代码项$t_2$时，
+也是进行类似的操作。先将不动点放入上下文中，当$t_2$的值计算完毕后，将用它来替换不动点中的参数$x$，然后计算继续进行。
+对于$\mathbf{ifz}$条件语句，我们求出$t_1$的值$n$，并根据$n$是否为0来确定下一步规约操作。
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[t]{0.43\textwidth}
+        \begin{gather*}
+            \displaystyle{\frac{t_{pcf}=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+            \displaystyle{\frac{t_1\; is\; a\; value\quad t_3=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2 [t_1/x],\; ctx)}} \\
+            \displaystyle{\frac{v\; is\; a\; value\quad t_3=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(v,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_3 [v/t_1],\; ctx)}} \\
+            \displaystyle{\frac{t_{pcf}=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+            \displaystyle{(\mathbf{ifz}\; 0\; t_2\; t_3,\; ctx)\rightarrow (t_2,\; ctx)} \\
+            \displaystyle{\frac{n \neq 0}{(\mathbf{ifz}\; n\; t_2\; t_3,\; ctx)\rightarrow (t_3,\; ctx)}} \\
+        \end{gather*}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.55\textwidth}
+        \begin{gather*}
+            \displaystyle{\frac{t_{pcf}=((\mathbf{fix}\; f\; x\; t_1)\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (\mathbf{fix}\; f\; x\; t_1)\; ctx)}} \\
+            \displaystyle{\frac{t_2\; is\; a\; value\quad t_3=(\mathbf{fix}\; f\; x\; t_1)} {(t_2,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_1 [t_2/x,t_3/f],\; ctx)}} \\
+            \displaystyle{(op\; t_1\; t_2,\; ctx)\rightarrow (t_1,\; ctx_{seq}\; (op\; t_1\; t_2,\; ctx)\; ctx)} \\
+            \displaystyle{\frac{v_1\; is\; a\; value\quad t_3=(op\; t_1\; t_2,\; ctx)} {(v_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)}} \\
+            \displaystyle{\frac{v_1,\; v_2\; are\; values\quad n=\mathbf{eval}_{op}\; op\; v_1\; v_2}{(v_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)\rightarrow (n,\; ctx)}} \\
+        \end{gather*}
+    \end{subfigure}   
+    \caption{直接风格的PCF语言小步操作语义转换规则} \label{pcfopsem}
+\end{figure}
+
+CPS形式的PCF语言的小步操作语义表示为形如$(t_{cps},loc_{cps})\rightarrow(t'_{cps},loc'_{cps})$的推导规则。
+同样的，$t_{cps}$是正在被计算的CPS代码项，$loc_{cps}$是从延续变量名或函数名到引入它们的代码项的映射（Mapping）。
+$t'_{cps}$和$loc'_{cps}$分别是更新后的CPS代码项和映射。
+CPS形式的PCF语言的小步操作语义转换规则如图~\ref{cpsopsem}所示。
+$\mathbf{letval}$表达式可以将新的值引入代码项$t$，我们只需要在$t$中用$v$替换变量$x$。
+对于代码项$(\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)$，
+首先对$t_2$求值并更新$loc_{cps}$，添加从延续变量$k$到该代码项的映射。
+我们使用$loc_{cps}\; [k\mapsto t_{cps}]$这种标记来表示对映射$loc_{cps}$的更新操作。
+当把延续$k$应用于值$v$时（用$k\; v$表示），由于$t_1$是延续$k$的延续体，我们将$t_1$中的变量$x$替换为$v$。
+$\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun}$结构时，我们会更新从$f$到该项的映射。
+当我们将延续$k_0$和变量$x_0$作为参数传递给$f$时，我们分别用$k_0$和$x_0$替换函数体$t_1$中的$k$和$x$。
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.43\textwidth}
+        \begin{gather*}
+            \displaystyle{\frac{t_{cps}=(\mathbf{letval}\; x=v\; \mathbf{in}\; t)} {(t_{cps},\; loc_{cps})\rightarrow (t [v/x],\; loc_{cps})}} \\
+            \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; 0\; t_1\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_1,\; loc_{cps})}} \\
+            \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; n\; t_1\; t_2)\quad n \neq 0} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps})}} \\
+            \displaystyle{\frac{loc_{cps}\; k = (\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)}{(k\; v,\; loc_{cps})\rightarrow (t_1 [v/x],\; loc_{cps})}} \\
+        \end{gather*}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.55\textwidth}
+        \begin{gather*}
+            \displaystyle{\frac{t_{cps}=(\mathbf{letop}\; x=op\; v_1\; v_2\; \mathbf{in}\; t)}
+            {(t_{cps},\; loc_{cps})\rightarrow (t [(\mathbf{eval}_{op}\; op\; v_1\; v_2)/x],\; loc_{cps})}} \\
+            \displaystyle{\frac{t_{cps}=(\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [f\mapsto t_{cps}])}} \\
+            \quad \displaystyle{\frac{loc_{cps}\; f = (\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)}{(f\; k_0\; x_0,\; loc_{cps})\rightarrow (t_1 [x_0/x, k_0/k],\; loc_{cps})}} \\
+            \displaystyle{\frac{t_{cps}=(\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [k\mapsto t_{cps}])}} 
+        \end{gather*}
+    \end{subfigure}   
+    \caption{CPS形式的PCF语言小步操作语义转换规则}\label{cpsopsem}
+\end{figure}
+
 \subsection{直接风格PCF语言的CPS转换} \label{sec:cpstrans}
+
+如第\ref{sec:bg_cpsssa}节中所述，函数式语言的编译器通常会将直接风格的源程序转换为CPS形式，
+即进行CPS转换（CPS Transformation）。本节中，我们将介绍把PCF源程序转换为CPS形式的编译算法。
+该算法遵循CPS转换的一般模式~\cite{plotkin1975call,danvy2007one}，根据计算的层次顺序递归地解构处理PCF代码项。
+例如，如果PCF代码项$t$的计算步骤可以有序地分为对$t_1$和$t_2$的计算，
+那么我们就可以把对$t_2$进行转换得到的CPS代码项放入之后要处理的参数中，并在下一步中直接开始处理$t_1$。 
+
+转换过程由图~\ref{algo:cpstrans}中的函数$\mathcal{F}_{proc}$描述，它使用了一个更加广义的转换函数$\mathcal{F}$。
+函数$\mathcal{F}$的输入和输出分别表示为$(t_{pcf}, l_v, \kappa)$和$t_{cps}$。
+$t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cps}$，
+代表了当前代码项被归约到一个值后要被应用的CPS代码项（延续）。$t_{cps}$是其生成的CPS程序。
+在我们的CPS转换算法中，变量使用有名字的字符串名称。$l_v$是已经被使用的变量列表，
+新生成的名称不能与$l_v$中的名称冲突。例如，使用图~\ref{cpstrans}中的规则（3）对$t_1\; t_2$进行转换，
+生成的新变量$k,\, x,\, y,\, z$必须不能已经存在于$l_v$中。该步转换之后，它们被添加到$l_v$中。
+为了简化转换规则，我们没有在图中的算法里写出使用$l_v$指定生成新变量的具体操作。
+它所做的其实是通过维护最新生成的变量的下标，来选择最小未使用的正数作为新变量的下标。
+在初始状态中，要转换的PCF程序即为源程序$t_{pcf}$，新生成的名称只有顶层延续变量的名字$k_{init}$。
+此时参数$\kappa$为$\lambda x. (k_{init}\; x)$，表示它接受整个生成的$t_{cps}$程序的值。
+因此，应用$k_{init}$的值将是程序的最终结果。
+
+\begin{figure}[t]
+    \centering
+    % \small
+    \begin{algorithm}[H]
+        \caption{CPS转换}
+        \SetAlgoLined
+        $\mathcal{F}_{proc}:\quad \mathbf{Input:}\; t_{pcf}\quad \mathbf{Output:}\; t_{cps}$\\
+        $\mathcal{F}_{proc}(t_{pcf})\coloneqq \mathbf{\mathcal{F}}(t_{pcf}, [k_{init}], \lambda x. (k_{init}\; x))$\\
+        \vspace*{0.5em}
+        $\mathcal{F}:\quad \mathbf{Input:}\; t_{pcf},\; l_v,\; \kappa \quad \mathbf{Output:}\; t_{cps}$\\ 
+        $(1).\; \mathbf{\mathcal{F}}(i, l_v, \kappa) \coloneqq \textcolor{blue}{\mathbf{letval}\; x= i\; \mathbf{in}\; \kappa(x)} $ \\
+        $(2).\; \mathbf{\mathcal{F}}(x, l_v, \kappa) \coloneqq \kappa(x) $ \\
+        $(3).\; \mathbf{\mathcal{F}}(t_1\; t_2, l_v, \kappa) \coloneqq \mathbf{\mathcal{F}}(t_1, l'_v,\lambda x. \mathbf{\mathcal{F}}(t_2, l'_v, \lambda y. (\textcolor{blue}{\mathbf{letcont}\; k\; z=\kappa(z)\; \mathbf{in}\; (x\; k\; y)})))$ \\
+        $\quad\quad \mathtt{where}\; l'_v = l_v \doubleplus [k;x;y;z]$ \\
+        $(4).\; \mathbf{\mathcal{F}}(\mathbf{ifz}\; t_1\; t_2\; t_3, l_v, \kappa) \coloneqq \mathbf{\mathcal{F}}(t_1, l'_v, \lambda x. (\textcolor{blue}{\mathbf{ifz}\; x\; \mathbf{\mathcal{F}}(t_2, l'_v, \kappa)\; \mathbf{\mathcal{F}}(t_3, l'_v, \kappa)}))  $ \\
+        $\quad\quad \mathtt{where}\; l'_v = l_v \doubleplus [x]$ \\
+        $(5).\; \mathbf{\mathcal{F}}(op\; t_1\; t_2, l_v, \kappa) \coloneqq \mathbf{\mathcal{F}}(t_1, l'_v,\lambda x.\mathbf{\mathcal{F}}(t_2, l'_v, \lambda y. (\textcolor{blue}{\mathbf{letop}\; z=op\; x\; y\; \mathbf{in}\; \kappa(z)}))) $ \\
+        $\quad\quad \mathtt{where}\; l'_v = l_v \doubleplus [x;y;z]$ \\
+        $(6).\; \mathbf{\mathcal{F}}(\mathbf{let}\; x=t_1\; \mathbf{in}\; t_2, l_v, \kappa) \coloneqq \mathbf{\mathcal{F}}(t_1, l_v, \lambda x. \mathbf{\mathcal{F}}(t_2, l_v, \kappa)) $ \\
+        $(7).\; \mathbf{\mathcal{F}}(\mathbf{fix}\; f\; x\; t, l_v, \kappa) \coloneqq \textcolor{blue}{\mathbf{letfun}\; f\; k\; x= \mathbf{\mathcal{F}}(t, l'_v, \lambda y. (k\; y))\; \mathbf{in}\; \kappa(f)}$ \\
+        $\quad\quad \mathtt{where}\; l'_v = l_v \doubleplus [k;y]$
+    \end{algorithm}
+    \caption{CPS转换算法}\label{algo:cpstrans}
+\end{figure}
 
 \section{目标语言：类似LLVM IR的SSA语言}
 
