@@ -219,7 +219,49 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
 
 \section{目标语言：类似LLVM IR的SSA语言}
 
+本文中使用的目标SSA语言是一种简化版本的LLVM IR，保留了其最基本的程序结构层次。
+在本节接下来的内容中，我们将定义它的语法和小步操作语义，并讨论对SSA程序中自由变量的处理和避免。
+
 \subsection{目标语言的语法和语义}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{equation}
+        \nonumber
+        \begin{aligned}
+            l &\coloneqq string & v &\coloneqq i\; |\; x & r &\coloneqq \mathbf{ret}\; v\; |\; \mathbf{br_{uc}}\; l\; |\; \mathbf{br_c}\; v\; l_1\; l_2 \\
+            \phi_a &\coloneqq (l,\; v) & \phi &\coloneqq x = \overline{\phi_a} &  c &\coloneqq v\; |\; op\; v_1\; v_2\; |\; \mathbf{icmp}\; v_1\; v_2\; |\; \mathbf{call}\; x\; v \\
+            a &\coloneqq x = c; & b &\coloneqq l:\; \overline{\phi}\; \overline{a}\; r & f &\coloneqq \mathbf{define}\; l_1(l_2)\; \overline{b} \quad\quad\quad t \coloneqq \overline{f} \\
+        \end{aligned}
+    \end{equation}
+    \caption{SSA目标语言的语法}\label{synssa}
+\end{figure}
+
+我们使用的目标SSA语言的语法定义如图~\ref{synssa}所示。
+顶层的翻译单元（Translation Unit）$t$由一系列函数定义组成。
+一个函数$f$包含函数名$l_1$、参数$l_2$和一系列基本代码块$\overline{b}$。
+一个基本代码块$b$由它的标签$l$、$\overline{\phi}$节点序列、指令$\overline{a}$序列和一个终止指令（terminator）$r$组成。
+一条指令$a$将命令$c$的值赋给变量$x$。$c$包括值$v$、二元运算表达式、比较两个值是否相等的命令和函数调用。
+终止指令包括$\mathbf{ret}$和$\mathbf{br}$，分别用于表示函数返回和块之间的跳转。
+作为示例程序，图~\ref{factssa}展示了SSA中的阶乘函数与2的阶乘。
+
+\begin{figure}[ht]
+    \centering
+    \begin{equation}
+        \nonumber
+        \begin{aligned}
+            & \mathbf{define}\; fact\; (x)\\
+            & \quad b_1:\; b_0 = \mathbf{icmp}\; x\; 0;\; \mathbf{br_c}\; b_0\; t_0\; f_0; \\
+            & \quad t_0:\; x_1 = 1;\; r_{t0} = x_1;\; \mathbf{ret}\; r_{t0}; \\
+            & \quad f_0:\; x_2 = 1;\; x_4 = x - x_2;\; z = \mathbf{call}\; fact\; x_4;\; \mathbf{br_{uc}}\; k_1; \\
+            & \quad k_1:\; x_3 = x*z;\; r_{k1} = x_3;\; \mathbf{ret}\; r_{k1}; \\
+            & \mathbf{define}\; main\; ( )\\
+            & \quad b_1:\; x_5 = 2;\; y = \mathbf{call}\; fact\; x_5;\; \mathbf{br_{uc}}\; k_2;\\
+            & \quad k_2:\; r_{k2} = y;\; \mathbf{ret}\; r_{k2};
+        \end{aligned}
+    \end{equation}
+    \caption{SSA语言中的阶乘程序}\label{factssa}
+\end{figure}
 
 \subsection{含有自由变量的函数}
 
