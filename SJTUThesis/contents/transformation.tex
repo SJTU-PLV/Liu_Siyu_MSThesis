@@ -263,6 +263,56 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
     \caption{SSA语言中的阶乘程序}\label{factssa}
 \end{figure}
 
+目标SSA语言的小步操作语义表示为形如$(pc, ppc, loc_{ssa}, s_{ssa}) \rightarrow (pc', ppc', $ \\ $loc'_{ssa}, s'_{ssa})$的推导规则。
+$pc$是程序计数器（Program Counter），用于定位当前指令，由三个元素$(l_{f}, l_b, n)$组合而成。
+其中，$l_{f}$是当前函数标签，$l_b$是当前基本代码块标签，$n$表示基本块中指令的位置。
+可以使用$\mathbf{code}_{at}\; pc$获取$pc$位置处的指令。$ppc$存储了上一个块中进行跳转之前的程序计数器值，
+以便对$\phi$-节点进行求值。$loc_{ssa}$是变量名到它们的值的映射。
+我们在堆栈$s_{ssa}$中保留调用当前函数的指令的程序计数器，以便在当前函数返回时能够返回到调用时的位置。
+
+SSA语言的操作语义转换规则如图~\ref{ssaopsem}所示。第一条规则描述了函数调用的程序状态转换。
+控制流跳转到函数$f$的开头，并将函数返回地址存储在$s_{ssa}$中。
+$\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$表示把从$x$到$v_0$的映射添加到$loc_{ssa}$中。
+例如，在图~\ref{factssa}中，当主函数调用$fact$函数时，按照图~\ref{ssaopsem}中的第一条规则，
+程序状态从$((main,b_1,1),\, (main,empty,1),\, loc_{ssa},\, s_{ssa})$ 
+转换到$((fact,b_1,0),\, (main,b_1,1),\, loc_{ssa}$ \\ $[x\mapsto 2],\, \mathbf{push}\; s_{ssa}\; (main,b_1,1))$。
+第二条规则定义了当前函数返回并将返回值传递给调用语句时发生的状态转换。
+它从$s_{ssa}$的顶部取出程序计数器$npc$，存储返回值，并跳回该调用语句的位置。
+
+\begin{figure}[htbp]
+    % \vspace*{-0.3cm}
+    \centering
+    % \small
+    \begin{gather*}
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (y=\mathbf{call}\; f\; v_0)\quad \mathbf{arg}\; f = x}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((f,b_1,0),\; pc,\; loc_{ssa}\; [x\mapsto v_0],\; \mathbf{push}\; s_{ssa}\; pc )}} \\
+        % & \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; id = phi,\quad n = \mathbf{eval}_{phi}\ phi\ ppc\ loc_{ssa} } {(pc,\; ppc,\; loc_{ssa},\; ploc_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; id\mapsto n,\; ploc_{ssa})}} \\
+        \displaystyle{\frac{\begin{matrix}\mathbf{code}_{at}\; pc\; =\; (\mathbf{ret}\; v)\quad pc.l_f \neq main\quad npc = \mathbf{top}\; s_{ssa}
+        \\ \mathbf{code}_{at}\; npc\; =\; (x=\mathbf{call}\; f\; v_0)\end{matrix}} 
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (npc+1,\; pc,\; loc_{ssa}\; [x\mapsto v],\; \mathbf{pop}\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\overline{\phi_a})\quad n\; =\; \mathbf{eval}_{\phi}\ \overline{\phi_a}\ ppc}
+            {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=op\; v_1\; v_2)\quad n\; =\; \mathbf{eval}_{exp}\ loc_{ssa}\ op\; v_1\; v_2}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=v)\quad n\; =\; v\; is\; value?\; v\; :\; (loc_{ssa}\; v)}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\mathbf{icmp}\; v_1\; v_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v_1\; v_2)\; n=1\; \mathbf{else}\; n=0}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_{uc}}\; l)}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((pc.l_f, l, 0),\; pc,\; loc_{ssa},\; s_{ssa})}} \\
+        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_c}\; v\; l_1\; l_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v\; 0)\; l_n=l_1\; \mathbf{else}\; l_n=l_2}
+        {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((pc.l_f, l_n, 0),\; pc,\; loc_{ssa},\; s_{ssa})}}
+    \end{gather*}
+    \caption{目标SSA语言的小步操作语义转换规则}\label{ssaopsem}
+\end{figure}
+
 \subsection{含有自由变量的函数}
+
+我们的目标SSA语言与LLVM IR之间的一个重要区别在于，$loc_{ssa}$是一个全局映射（Global Mapping），
+我们允许函数包含未在该函数中定义的自由变量（Free Variables）。这样做是因为我们的源语言是带有自由变量的高阶函数。
+典型的函数式语言编译器会对CPS程序使用闭包转换（Closure Conversion），将开放函数转换为闭包。
+闭包转换的形式化验证已经得到广泛研究~\cite{paraskevopoulou2019closure,wang-esop2016}。
+为简单起见，我们没有将闭包转换包含在我们的编译链中。我们的SSA语言支持闭包和开放函数，
+并专注于CPS到SSA转换的本质。在接下来的内容中我们将讨论这一点。
 
 \section{转换算法设计} \label{sec:cpsssatrans}
