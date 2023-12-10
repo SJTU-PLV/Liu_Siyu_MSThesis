@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{bm}
+
+\title{Mathematical Logic Exam}
+\author{Liu Siyu}
+\date{December 2023}
+
+\begin{document}
+
+\maketitle
+
+\begin{enumerate}
+    \item Function $f$ : $A \rightarrow B$ is ( \textbf{surjective/onto} ) if for every element of B, 
+        it has some preimage in A.
+    \item A set is said to be ( \textbf{countable} ) iff there is a one-to-one mapping 
+        from it to the set of natural numbers. 
+    \item The set of infinite binary sequences is ( \textbf{uncountable} ).
+    \item if A is countable and non-empty then the set of all finite
+        sequences of members of A is ( \textbf{countable} ).    
+    \item Formalize the following statement into a well-formed formula (wff): \\
+        ``If the computer system doesn't work well, then either the software has some bugs, or the hardware is not functioning.'' \\
+        Let $A_1$ denote ``the computer system works well'', let $A_2$ denote ``the software has some bugs'', 
+        let $A_3$ denote ``the hardware is functioning''. \\
+        \bm{$((\lnot A_1)\rightarrow (A_2 \lor (\lnot A_3)))$}
+    \item The possible lengths of a wff is $n$, $n$ is a positive integer, then $n$ can't be 
+        ( \textbf{2, 3, 6} )
+    \item A truth assignment $v$ satisfies the wff $(\dots (A_1 \leftrightarrow A_2)\leftrightarrow \dots \leftrightarrow A_n)$
+        iff the number of $i$ that $v(A_i) = F$ is $n$, $1 \leq i \leq n$, and ( \textbf{ n is even} ).
+    \item Of the following three sets of wffs, list the label(s) of satisfiable ones: \\
+        (1). $\{\lnot A_3, A_1 \leftrightarrow A_3\} \quad$ (2). $\emptyset  \quad$ 
+        (3). $\{A_1, A_1\rightarrow A_2, A_2\rightarrow (A_1 \land \lnot A_1)\}$ \\
+        (4). $\{((\lnot A_1 \land A_2)\rightarrow (A_1 \rightarrow A_2))\}$ \\
+        \textbf{1, 2, 4}
+    \item Let $\alpha$ be the wff $((A_2\rightarrow (A_1\rightarrow A_3)) \leftrightarrow ((A_2 \land A_1)\rightarrow A_3))$,
+        the truth assignment for the sentence symbols is $v(A_1)=T,\; v(A_2)=T,\; v(A_3)=F$, then 
+        $\overline{v}(\alpha)$ is ( \textbf{T} ).
+    \item Write a formula that is tautologically equivalent to $(\lnot((\lnot (A_1 \lor A_2)) \rightarrow A_3))$
+        whose only connectives are $\lnot$ and $\land$. \\
+        \bm{$(((\lnot A_1)\land (\lnot A_2))\land (\lnot A_3))$}
+\end{enumerate}
+
+\begin{enumerate}
+\item Which of the following statements is false? (C)
+    \begin{enumerate}
+        \item If A and B are countable, $A\times B$ is countable.
+        \item An empty set is countable.
+        \item Let S denote the set of infinite binary sequences, then S is countable.
+        \item if A is countable and non-empty then the set of all finite sequences of members of A is countable.
+    \end{enumerate}
+
+\item Which of the following statements about wff is false? (C)
+    \begin{enumerate}
+    \item Any expression with more left parentheses than right parentheses is not a wff.
+    \item Suppose that $\alpha$ is a wff not containing the negation symbol ¬, the length of $\alpha$ is odd.
+    \item Suppose that $\alpha$ is a wff not containing the negation symbol ¬, it's possible that less than a quarter of the symbols are sentence symbols.
+    \item $(A_1 \land A_2 \land A_3)$ is not a wff.
+    \end{enumerate}
+
+\item Which of the following statements doesn't hold in sentential logic? (D)
+    \begin{enumerate}
+        \item $\{A, (\lnot A)\}\models B$.
+        \item $\{A, (A\rightarrow B) \}\models B$.
+        \item $\emptyset \models (((A \land B)\rightarrow C)\rightarrow D)\rightarrow ((A\rightarrow C)\rightarrow D)$.
+         \item $(A\leftrightarrow (B\leftrightarrow C))\models ((A\land (B\land C))\lor ((\lnot A)\land ((\lnot B)\land (\lnot C)))$.
+    \end{enumerate}
+
+\item Which of the sets of sentential connectives are complete? (A)\\
+(1). $\{\land, \lor, \lnot \}$ \\
+(2). $\{\land, \rightarrow \}$ \\
+(3). $\{\land, \lor, \rightarrow, \leftrightarrow \}$ \\
+(4). $\{\lnot, \land \}$
+    \begin{enumerate}
+        \item (1)(4)
+        \item (1)(3)
+        \item (1)(3)(4)
+        \item (1)(2)(3)(4)
+    \end{enumerate}
+
+\item Which of the following statements are true? (D)\\
+(1). If $\alpha \in \Sigma$, then $\Sigma \models \alpha$.\\
+(2). If $\Sigma \models \alpha$, then there is a finite $\Sigma_0 \subseteq \Sigma$ such that $\Sigma_0 \models \alpha$.\\
+(3). If $\Sigma \models \alpha$ and $\alpha \models \beta$, then $\Sigma \models \beta$.\\
+(4). $\Sigma \not\models \alpha$ iff $\Sigma \cup \{\lnot \alpha \}$ is satisfiable.\\
+    \begin{enumerate}
+        \item (1)(2)(3)
+        \item (1)(2)(4)
+        \item (2)(3)(4)
+        \item (1)(2)(3)(4)
+    \end{enumerate}
+
+\item Which of the following wffs are sentences? (B)\\
+(1). $(\forall xAx\rightarrow Bx)$\\
+(2). $(\forall x(Px\rightarrow \forall xQx ))$\\
+(3). $(\forall x(Py\rightarrow \exists y Q x y))$\\
+(4). $(\forall x \forall y (P x y \rightarrow \exists z Qxz))$
+    \begin{enumerate}
+        \item (1)(4)
+        \item (2)(4)
+        \item (1)(2)(4)
+        \item (3)(4)
+    \end{enumerate}
+
+\item Which of the following wff is not valid? (B)
+    \begin{enumerate}
+        \item $\forall x (\dot{P}x\rightarrow \exists y\dot{P}y)$
+        \item $\dot{P}xy \rightarrow \exists y \dot{P}yy$
+        \item $\forall x(\dot{P}x\rightarrow \dot{Q}x)\land \dot{Q}y \rightarrow \dot{P}y$
+        \item $\forall x(\dot{P}x\rightarrow \dot{Q}x)\land \exists y \dot{P}y \rightarrow \exists y \dot{Q}y$
+    \end{enumerate}
+
+\end{enumerate}
+
+\end{document}
