@@ -184,7 +184,7 @@ $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun
 $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cps}$，
 代表了当前代码项被归约到一个值后要被应用的CPS代码项（延续）。$t_{cps}$是其生成的CPS程序。
 在我们的CPS转换算法中，变量使用有名字的字符串名称。$l_v$是已经被使用的变量列表，
-新生成的名称不能与$l_v$中的名称冲突。例如，使用图~\ref{cpstrans}中的规则（3）对$t_1\; t_2$进行转换，
+新生成的名称不能与$l_v$中的名称冲突。例如，使用图~\ref{algo:cpstrans}中的规则（3）对$t_1\; t_2$进行转换，
 生成的新变量$k,\, x,\, y,\, z$必须不能已经存在于$l_v$中。该步转换之后，它们被添加到$l_v$中。
 为了简化转换规则，我们没有在图中的算法里写出使用$l_v$指定生成新变量的具体操作。
 它所做的其实是通过维护最新生成的变量的下标，来选择最小未使用的正数作为新变量的下标。
@@ -316,3 +316,89 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 并专注于CPS到SSA转换的本质。在接下来的内容中我们将讨论这一点。
 
 \section{转换算法设计} \label{sec:cpsssatrans}
+
+\begin{figure}[!ht]
+    \centering
+    \begin{algorithm}[H]
+        \caption{CPS$\rightarrow $SSA 转换}
+        \SetAlgoLined
+        $\mathcal{G}_{proc}:\quad \mathbf{Input:}\; t_{cps}\quad \mathbf{Output:}\; t_{ssa}$\\
+        $\mathcal{G}_{proc}(t_{cps})\coloneqq t_{ssa}  $\\
+        $\quad\quad \mathtt{where}\; (t_{ssa}, n, loc) = \mathbf{\mathcal{G}}(t_{cps}, \mathbf{app}_b\; nil\; main, (main, b_1, 0), 0, loc_{empty}) $\\
+        % $\quad\quad\quad\quad t_{ssa}$ \\
+        \vspace*{0.5em}
+        $ \mathbf{\mathcal{G}}:\quad \mathbf{Input:}\; t_{cps}, t_{ssa}, pc, n, loc\quad \mathbf{Output:}\; t'_{ssa}, n', loc' $ \\
+        $ (1).\; \mathbf{\mathcal{G}}(\textcolor{blue}{\mathbf{letval}\; x=v\; \mathbf{in}\; t}, t_{ssa}, pc, n, loc) \coloneqq  $ \\
+        $ \quad\quad\quad \mathbf{\mathcal{G}}(t, \mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{x=v;}], pc+1, n, loc) $ \\
+        $ (2).\; \mathbf{\mathcal{G}}(\textcolor{blue}{\mathbf{letop}\; x=op\; x_1\; x_2\; \mathbf{in}\; t}, t_{ssa}, pc, n, loc) \coloneqq  $ \\
+        $ \quad\quad\quad \mathbf{\mathcal{G}}(t, \mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{x=op\; x_1\; x_2;}], pc+1, n, loc) $ \\
+        $ (3).\; \mathbf{\mathcal{G}}(\textcolor{blue}{\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2}, t_{ssa}, pc, n, loc) \coloneqq \mathbf{\mathcal{G}}(t_2, t', pc, n', loc') $ \\
+        $ \quad\quad \mathtt{where}\; (t', n', loc') = \mathbf{\mathcal{G}}(t_1, \mathbf{app}_p\; t_{ssa}\; f, (f, b_1, 0), 0, loc\; (k\mapsto\; t_{cps})) $ \\
+        $ (4).\; \mathbf{\mathcal{G}}(\textcolor{blue}{\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2}, pc, n, loc) \coloneqq  $ \\
+        $ \quad\quad\quad  \mathbf{\mathcal{G}}(t_1, \mathbf{app}_b\; t'\; pc\; k, (pc.l_f, k, 0), n', loc') $ \\
+        $ \quad\quad \mathtt{where}\; (t', n', loc') = \mathbf{\mathcal{G}}(t_2, t_{ssa}, pc, n, loc\; (k\mapsto\; t_{cps})) $ \\
+        $ (5).\; \mathbf{\mathcal{G}}(\textcolor{blue}{\mathbf{ifz}\; x\; t_1\; t_2}, pc, n, loc) \coloneqq \mathbf{\mathcal{G}}(t_2, \mathbf{app}_b\; t'\; pc\; f_n, (pc.l_f, f_n, 0), n', loc') $ \\
+        $ \quad\quad \mathtt{where}\; t_{br} = \mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{b_n=\mathbf{icmp}\; x\; 0;\; \mathbf{br_c}\; b_n\; t_n\; f_n;}]  $ \\
+        $ \quad\quad \mathtt{and}\; (t', n', loc') = \mathbf{\mathcal{G}}(t_1, \mathbf{app}_b\; t_{br}\; pc\; t_n, (pc.l_f, t_n, 0), n+1, loc) $ \\
+        $ (6).\; \mathbf{\mathcal{G}}(\textcolor{blue}{k\; x}, t_{ssa}, pc, n, loc) \coloneqq $\\
+        $\quad\quad\quad \left\{ 
+        \begin{aligned}
+            & (\mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{r_b = x;\; \mathbf{ret}\; r_b;}], n, loc) \\[-3pt]
+            & \quad\quad \mathtt{when}\; loc\; k \coloneqq \textcolor{blue}{\mathbf{letfun}\; f\; k\; x_0=t_1\; \mathbf{in}\; t_2}\; \mathtt{or}\; k=k_{init} \\[-3pt]
+            & (\mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{x_0 = x;\; \mathbf{br_{uc}}\; k;}], n, loc) \\[-3pt]
+            & \quad\quad \mathtt{when}\; loc\; k \coloneqq \textcolor{blue}{\mathbf{letcont}\; k\; x_0=t_1\; \mathbf{in}\; t_2} \\
+        \end{aligned}
+        \right. $\\
+        % \end{equation}
+        $ (7).\; \mathbf{\mathcal{G}}(\textcolor{blue}{f\; k\; x}, t_{ssa}, pc, n, loc) \coloneqq $ \\
+        $\quad\quad\quad  \left\{ 
+            \begin{aligned}
+        & (\mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{r_b = \mathbf{call}\; f\; x;\; \mathbf{ret}\; r_b;}], n, loc) \\[-3pt]
+        & \quad\quad \mathtt{when}\; loc\; k \coloneqq \textcolor{blue}{\mathbf{letfun}\; f\; k\; x_0=t_1\; \mathbf{in}\; t_2}\; \mathtt{or}\; k=k_{init} \\[-3pt]
+        & (\mathbf{app}_i\; t_{ssa}\; pc\; [\textcolor{purple}{x_0 = \mathbf{call}\; f\; x;\; \mathbf{br_{uc}}\; k;}], n, loc) \\[-3pt]      
+        & \quad\quad \mathtt{when}\; loc\; k \coloneqq \textcolor{blue}{\mathbf{letcont}\; k\; x_0=t_1\; \mathbf{in}\; t_2} \\
+            \end{aligned}
+        \right. $\\
+    \end{algorithm}
+    \caption{CPS到SSA的转换算法}\label{cps2ssa}
+\end{figure}
+
+我们设计了将CPS形式的PCF程序转换为SSA程序的转换算法。本质上，该转换过程是一个递归函数，
+它接受一个CPS源程序和一个空的SSA程序，不断将新的组件（例如基本代码块、指令等）放入当前的SSA程序，
+并在递归翻译CPS项时更新参数。一旦整个CPS程序的翻译完成，所得到的SSA程序就是我们需要的目标程序。
+
+在转换算法~\ref{cps2ssa}中，函数$\mathcal{G}_{proc}$将CPS代码项转换为具有一个主函数的SSA顶层翻译单元$t_{ssa}$。
+它使用了函数$\mathcal{G}$，该函数将$(t_{cps}, t_{ssa}, pc, n, loc)$作为输入，
+并输出$(t'_{ssa}, n', loc')$。其中，$t_{cps}$是待转换的CPS程序，$t_{ssa}$是已生成的SSA程序。
+$pc$表示我们插入新的SSA代码片段时，当前程序计数器指向的位置。为了在SSA的条件语句分支中生成新的基本块标签，
+我们使用参数$n$跟踪CPS程序中遇到的$\mathbf{ifz}$代码项的数量。
+$loc$指的是从延续变量到定义它们的CPS项的映射。我们可以使用它来确定$k$是局部延续
+（即由$\mathbf{letcont}$语句引入的延续变量）还是返回延续（即函数的延续变量）。
+请注意，我们在$loc_{cps}$中存储整个$\mathbf{letcont}$或$\mathbf{letfun}$语句来表示局部或返回延续，
+尽管我们不需要它们的延续体。这是为了避免引入用于区分局部和返回延续的中间项。
+
+该函数返回更新后的SSA程序$t'_{ssa}$，新的$\mathbf{ifz}$代码项数量$n'$和更新后的映射$loc'$。
+在初始状态中，$t_{ssa}$是一个空的主函数，$pc$指向主函数的开头，$n$为0，$loc$为空。
+算法~\ref{cps2ssa}中的$\mathbf{app}$操作表示将新的组件添加到SSA程序的$pc$位置。
+例如，规则（1）中的$(\mathbf{app}_i\; t_{ssa}\; pc\; [x=v;])$表示在$t_{ssa}$的位置$pc$
+处插入指令$[x=v;]$。
+
+我们通过将图中的CPS语言的阶乘程序示例（见图~\ref{factcps}）转换为SSA程序（见图~\ref{factssa}）
+来演示该转换算法的工作原理。
+\begin{enumerate}[label={(\alph*)}]
+    \item 根据转换规则（3），我们首先将$\mathbf{letfun}$代码项中的$\mathbf{ifz}$语句
+        转换为SSA函数$fact$的函数体并添加到初始的空白SSA程序中。
+        假设更新后的SSA程序和参数分别是$t_0$、$n_0$和$loc_0$，转换后的下一步就是对
+        $\mathcal{G}(\mathbf{letval}\; x_5=2\; \mathbf{in}\dots, t_0, (main,b_1,0), n_0,$ \\ $loc_0)$进行计算。   
+    \item 根据转换规则（1），我们在当前SSA程序$t_0$的$(main,b_1,0)$位置处插入赋值指令$[x_5=2;]$，
+        并将新的SSA程序称为$t_1$。然后，我们的转换目标就变成了
+        $\mathcal{G}(\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (fact\; k_2\; x_5), t_1, n_0, loc_0)$。
+    \item 根据转换规则（4），我们首先应该处理$(fact\; k_2\; x_5)$。
+        根据转换规则（7），由于延续$k_2$是一个局部延续，我们将$[y = \mathbf{call}\; fact\; x_5;\; \mathbf{br}_{uc}\; k_2;]$
+        这两条指令分别插入到SSA程序的位置$(main,b_1,1)$和$(main,b_1,2)$中。
+        然后，我们在SSA程序中添加一个空的基本代码块$k_2$，并将新的SSA程序命名为$t_2$。
+        我们还将从$k_2$到$\mathbf{letcont}$代码项的映射添加到$loc_0$中，并将更新后的映射称为$loc_1$。
+        这样，转换算法的目标变为$\mathcal{G}(k_{init}\; y, t_2, (main,k_2,0), n_0, loc_1)$。
+    \item 根据转换规则（6），我们将指令$[r_{k2} = y;\; \mathbf{ret}\; r_{k2};]$分别插入到
+        $(main,k_2,0)$和$(main,k_2,1)$位置中。生成的目标SSA程序如图~\ref{factssa}所示。
+\end{enumerate}
