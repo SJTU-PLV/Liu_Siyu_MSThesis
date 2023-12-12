@@ -1,0 +1,49 @@
+% !TEX root = ../main.tex
+
+\chapter{相关工作} \label{ch:related}
+
+在编译器验证领域，许多工作是围绕CompCert编译器展开的，包括很多函数式语言编译器的验证工作。
+例如，经验证的函数式编译器CertiCoq将Gallina（Coq语言）编译到了CompCert中使用的的Clight~\cite{belanger2019certified}。
+miniML经验证的编译器也使用了CompCert框架，将其编译到了CompCert中的中间语言Cminor~\cite{dargaye2009verification}。
+基于SSA的中间语言（例如LLVM IR）模块化、可移植和优化潜能大等特性引起了函数式编译器开发者的关注。
+近年来，一些原本不使用SSA后端的函数式编译器已经开始转向SSA后端以获得更好的性能~\cite{farvardin2020new}。
+我们的工作基于这些观察建立，是朝着构建利用SSA中间语言优势的经验证的函数式编译器迈出的第一步。
+
+\section{Gallina经验证的编译器CertiCoq}
+
+CertiCoq将Gallina编译到了C语言的子集Clight，以便与CompCert链接起来并最终编译到汇编语言，
+从而获得一个完整的经过验证的编译链~\cite{belanger2019certified,zoe-oopsla2021,zoe-icfp2021}。
+从CPS到Clight的编译过程及其形式化证明在Coq中实现，不过其使用的是大步操作语义而不是小步操作语义。
+该编译器的目标语言不是基于SSA的，因此不能直接连接到LLVM框架，也不能利用基于SSA中间语言的优化。
+
+\section{miniML经验证的编译器前端MLCompCert}
+
+MLCompCert是Zaynah Dargaye等人设计的一个经验证的编译器前端~\cite{dargaye2009verification}。
+它的源语言是ML纯函数式语言的部分，即miniML，包括了$\lambda$演算、$let$绑定、模式匹配等。
+它的目标语言是CompCert编译器后端的中间语言Cminor，即一种类似于C语言的底层语言。
+该编译器实现了一些经典的函数式程序编译优化，例如反柯里化（uncurrying）和统一数据结构表示等。
+设计者们在Coq中对该函数式程序编译器前端进行了实现和验证。
+
+\section{SML-New Jersey基于LLVM编译器后端的版本}
+
+SML-New Jersey编译器（SML/NJ）是Standard ML的著名编译器。在最近发布的新版本中，它更改了后端，
+将CPS中间语言编译到了LLVM IR~\cite{farvardin2020new}。CPS程序首先被转换为控制流图（Control-Flow Graph, CFG）中间语言，
+然后再转换为LLVM IR。这是因为将CPS中间语言连接到基于SSA的编译器基础设施能够利用这些编译器提供的丰富后端优化。
+但这项工作不是经过形式化验证的。
+我们的工作受到了这一趋势的启发，并进一步尝试对这种连接进行形式化验证。
+
+\section{CompCert支持SSA的扩展CompCertSSA}
+
+经验证的编译器也开始试着支持基于SSA中间语言的后端了。
+CompCertSSA是CompCert的一个扩展，具有一个基于SSA的中间端~\cite{compcertssa}。
+它将SSA作为一种可选的优化中间语言，允许在RTL（Register Transfer Language）三地址代码和SSA中间语言之间进行转换。
+虽然这使得CompCert能够实现一些基于SSA的优化~\cite{compcertssa-op,blazy-cpp2023}，
+但是CompCertSSA提供的优化仍然比较有限，不能与LLVM的后端优化相媲美。
+不过，它提供了一个从C语言开始的经过完整验证的编译链，是开发针对SSA的经验证的函数式编译器的有力工具。
+
+\section{经验证的LLVM IR: Vellvm}
+
+Vellvm在定理证明工具Coq中定义了LLVM中间语言的抽象语法树（Abstract Syntax Tree, AST），并为LLVM IR提供了形式化语义。
+早期版本的Vellvm提供了LLVM IR的操作语义~\cite{zhao2012formalizing}，
+而在较新版本中已迁移到了基于交互树（Interactive Tree, ITree）的语义~\cite{zakowski2021modular}。
+在本文第\ref{sec:overview}节所介绍的编译链中，SSA程序首先被编译到了Vellvm AST，然后生成了最终的LLVM IR程序。

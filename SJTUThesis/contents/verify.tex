@@ -1,19 +1,212 @@
 % !TEX root = ../main.tex
 
-\chapter{转换算法的语义保护验证} \label{ch:verify}
+\chapter{转换算法的语义保存性质证明} \label{ch:verify}
 
-\section{该编译链验证框架}
+\section{编译链验证框架概览}
+
+在上一节中，我们介绍了直接风格PCF程序的CPS转换以及CPS到SSA的转换算法。
+本节中我们将讨论如何对以上转换算法的正确性进行形式化验证。
+给定一个PCF程序$t_{pcf}$，首先通过$\mathcal{F}_{proc}$将其转换为CPS程序，
+然后再使用$\mathcal{G}_{proc}$把CPS程序转换为SSA程序$t_{ssa}$。
+将两步转换算法合并之后完整的转换函数表示为$Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf}))$。
+如第\ref{sec:compcertbackend}节中所介绍，转换算法的语义保存性质可由定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}表示，
+其中$t \Downarrow n$表示$t$会终止并返回$n$，$t \Uparrow$表示$t$会发散。
+如果转换后得到的SSA程序终止并返回$n$，则PCF程序也终止并返回$n$。另一方面，如果SSA程序发散，则PCF程序也发散。
+
+\begin{theorem}[程序终止行为的保存]\label{trm:bterm} 
+    \begin{tabbing}
+     \\
+    \quad\=$\forall \; t_{pcf}\; t_{ssa}\; n,\; $\=\kill
+    \>$\forall \; t_{pcf}\; t_{ssa}\; n,\; t_{ssa}\Downarrow n\; \wedge \; t_{ssa}=Comp(t_{pcf}) \Longrightarrow t_{pcf}\Downarrow n.$
+    \end{tabbing}
+  \end{theorem}
+  
+  \begin{theorem}[程序发散行为的保存]\label{trm:bdiv}
+    \begin{tabbing}
+      \\
+    \quad\=\kill
+    \>$\forall \; t_{pcf}\; t_{ssa},\; t_{ssa}\Uparrow\; \wedge \; t_{ssa}=Comp(t_{pcf})\Longrightarrow t_{pcf}\Uparrow.$
+    \end{tabbing}
+  \end{theorem}
+
+接下来，我们通过使用第\ref{sec:compcertbackend}节中介绍的模拟技术来证明语义保存性质的相关定理。
+我们首先需要为每个转换步骤建立前向模拟，然后将前向模拟性质组合成为完整编译过程的前向模拟，
+并利用目标语言的确定性将其转化为对安全程序的后向模拟。该证明依赖于这样一个性质，
+即终止的PCF程序总是会返回一个值（即不会陷入停滞状态）。
+由于本文中使用的是显式的变量命名方法，我们假设该属性成立并计划之后采用局部无名表示
+（Locally Nameless Representation）的方法来解决证明该属性的问题。
+最后，我们从后向模拟中得出语义保存特性。
+
+那么，我们在接下来的两节中将对这两步转换的前向模拟性质进行证明。
+这两步转换的形式化证明结构相似，不过前者是通过使用多步模拟进行程序内部执行步骤的模拟，
+而后者是使用星形模拟进行程序内部执行步骤的模拟。
 
 \section{CPS转换的前向模拟} \label{sec:cpsforward}
 
 \subsection{直接风格与CPS程序状态关系的不变式}
 
+我们已经在第\ref{sec:cpstrans}节中讨论了将直接风格的PCF程序转换为CPS形式的CPS转换算法。
+直接风格的PCF语言和与CPS语言之间的程序状态的不变量$\sim$关系在图\ref{simrelationcps}中定义如下。
+
+图~\ref{simrelationcps}中定义的$\sim$关系递归地关联了PCF程序和CPS程序的相应部分。
+规则(2)、(6)和(8)根据程序状态中的上下文和应用于值的延续变量$k$定义了PCF和CPS的匹配状态。
+规则(4)定义了函数调用状态的匹配关系，规则(9)定义了最终状态的匹配关系。其他规则根据子代码项的关系递归地定义了匹配状态。
+例如，规则(1)定义了PCF中$\mathbf{let}$语句与CPS中相应的$\mathbf{letcont}$语句的匹配状态。
+在PCF程序中，使用$t_1$的值在$t_2$中替代变量$x$。在CPS程序中，在$u_2$中通过续延$k$把值传递给CPS项$u_1$。
+因此，这两组子代码项符合$\sim$关系应当是这条规则的先决条件。其他规则的递归定义与之类似。
+
+\begin{figure}[htbp]
+    \centering
+    \begin{gather*}
+    \tag{1} \displaystyle{\frac{\begin{matrix}
+        c t x'=c t x_{seq}\; (\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2)\; c t x \quad
+        t_{c p s} = \mathbf { letcont }\; k\; x=u_1\; \mathbf{ in }\; u_2 \\
+        (t_1, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \\
+        (t_2, ctx)\sim (u_1, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \end{matrix}}
+        {(\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2, c t x) \sim (t_{c p s}, l_{c p s})}} \\
+    \tag{2} \displaystyle{\frac{\begin{matrix}
+        c t x'=c t x_{seq}\; (\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2)\; c t x \quad
+        l_{cps}\; k = \mathbf{letcont}\; k\; x = u_1\; \mathbf{in}\; u_2 \end{matrix}}
+        {(v, ctx')\sim (k\; v, l_{cps})}} \\
+    \tag{3} \displaystyle{\frac{\begin{matrix}
+        c t x'=c t x_{seq}\; (\mathbf{ fix }\; f\; x\; t_1)\; c t x \quad
+        t_{cps} = \mathbf{ letfun }\; f\; k\; x\; u_1\; \mathbf{ in }\; u_2  \\
+        (t_2, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \\
+        (t_1, ctx)\sim (u_1, update\; l_{cps}\; (k \mapsto t_{cps})) \end{matrix}}
+        {((\mathbf{ fix }\; f\; x\; t_1)\; t_2, ctx)\sim (t_{cps}, l_{c p s})}} \\
+    \tag{4} \displaystyle{\frac{\begin{matrix}
+        c t x'=c t x_{seq}\; (\mathbf{ fix }\; f\; x\; t)\; ctx \end{matrix}}
+        {(v, ctx')\sim (f\; k\; v, l_{cps})}} \\
+    \tag{5} \displaystyle{\frac{\begin{matrix}
+        c t x'=c t x_{seq}\; (op\; t_1\; t_2)\; c t x \quad
+        t_{op} = \mathbf{ letop }\; y = op\; x_1\; x_2\; \mathbf{in}\; (k\; y) \\
+        t_{cps2} = \mathbf{ letcont }\; k_2\; x_2 = t_{op}\; \mathbf{in}\; u_2 \quad
+        t_{cps1} = \mathbf{ letcont }\; k_1\; x_1 = t_{cps2}\; \mathbf{ in }\; u_1 \\
+        (t_1, ctx')\sim (u_1, update\; l_{cps}\; (k_1 \mapsto t_{cps1})) \\
+        (t_2, ctx')\sim (u_2, update\; l_{cps}\; (k_2 \mapsto t_{cps2})) \end{matrix}}
+        {(op\; t_1\; t_2, ctx)\sim (t_{cps1}, l_{cps})}} \\
+    \tag{6} \displaystyle{\frac{\begin{matrix}
+        ctx'=ctx_{seq}\; (op\; t_1\; t_2)\; ctx \quad
+        l_{cps}\; k = \mathbf{letcont}\; k_1\; x_1 = t\; \mathbf{in}\; u_1 \end{matrix}}
+        {(v, ctx')\sim (k_1\; v, l_{cps})}} \\    
+    \tag{7} \displaystyle{\frac{\begin{matrix}
+        ctx'=ctx_{seq}\; (\mathbf{ ifz }\; t_1\; t_2\; t_3)\; ctx \quad
+        t_{if} = \mathbf{ ifz }\; x\; u_2\; u_3 \\
+        t_{cps} = \mathbf{letcont}\; k\; x = t_{if}\; \mathbf{in}\; u_1 \quad
+        (t_1, ctx')\sim (u_1, update\; l_{cps}\; (k \mapsto t_{cps})) \\
+        (t_2, ctx)\sim (u_2, l_{cps}) \quad (t_3, ctx)\sim (u_3, l_{cps}) \end{matrix}}
+        {(\mathbf{ ifz }\; t_1\; t_2\; t_3, ctx)\sim (t_{cps}, l_{cps})}} \\
+    \tag{8} \displaystyle{\frac{\begin{matrix}
+        ctx'=ctx_{seq}\; (\mathbf{ ifz }\; t_1\; t_2\; t_3)\; ctx \quad
+        l_{cps}\; k = \mathbf{letcont}\; k\; x = (\mathbf{ ifz }\; x\; u_2\; u_3)\; \mathbf{in}\; u_1 \end{matrix}}
+        {(v, ctx')\sim (k\; v, l_{cps})}} \\
+    \tag{9} \displaystyle{\frac{\begin{matrix}
+        c t x' = ctx_{stop} \end{matrix}}
+        {(v, ctx')\sim (k_{init}\; v, l_{cps})}} \\
+    \end{gather*}
+    \caption{PCF与CPS程序状态之间的$\sim$关系规则}\label{simrelationcps}
+\end{figure}
+
+
 \subsection{直接风格与CPS程序内部执行步骤的模拟}
+
+对于任何PCF程序$t_{pcf}$和转换后得到的CPS程序$t_{cps}$，$\sim$关系应该在它们的
+初始状态（Initial State）下成立。
+它们的初始状态被定义为$\mathtt{initial}(t_{pcf}) = (t_{pcf}, ctx_{stop})$和
+$\mathtt{initial}(t_{cps}) = (t_{cps}, loc_{empty})$。
+
+在程序内部执行步骤的模拟中，我们使用多步模拟（Plus Simulation）来关联PCF和CPS程序状态的转换过程，
+而不必担心无限驻留（Infinite Stuttering）问题。正如定理~\ref{def:fsimcps2}所示，
+当PCF程序的状态在一步后到达$S'_{pcf}$，$S_{cps}$经过一步或多步转换到达$S'_{cps}$，
+且它们抵达的新的状态仍然符合$\sim$关系。
+
+\begin{theorem}[CPS转换中初始状态的模拟]\label{def:fsimcps}
+    \begin{tabbing}
+      \\
+    \quad\=\kill 
+    \>$\forall\; t_{pcf} \; t_{cps},\;
+       t_{cps}=\mathcal{F}_{proc}(t_{pcf})\Longrightarrow \mathtt{initial}\; (t_{pcf})
+       \sim \mathtt{initial}\; (t_{cps}).$
+    \end{tabbing}
+\end{theorem}
+
+\begin{theorem}[CPS转换中程序内部执行步骤的模拟]\label{def:fsimcps2}
+    \begin{tabbing}
+      \\
+    \quad\=\qquad\=$\exists\; S'_{cps},\; $\=\kill
+    \>$\forall \; S_{pcf}\; S_{cps}\; S'_{pcf},\; S_{pcf}\rightarrow S'_{pcf}\; \wedge \; S_{pcf}\sim S_{cps} \Longrightarrow \exists\; S'_{cps},\; S'_{pcf}\sim S'_{cps}\; \wedge
+        S_{cps}\xrightarrow{+} S'_{cps}$.
+    \end{tabbing}
+\end{theorem}
 
 \section{CPS到SSA转换的前向模拟} \label{sec:cpsssaforward}
 
-\subsection{测量函数的设计}
-
 \subsection{CPS与SSA程序状态关系的不变式}
+
+为了定义CPS到SSA转换的前向模拟，我们需要定义CPS和SSA语言程序状态之间的不变式，我们将其表示为$S_{cps} \sim S_{ssa}$。
+它递归地将CPS程序的每个子项与生成的SSA程序中相应的代码段进行匹配。
+例如，由$\mathbf{letcont}$代码项引入的局部延续$k$对应着SSA程序中名为$k$的基本代码块。
+延续$k$的延续体与从基本块$k$开始的一部分SSA代码相关联。
+当局部延续$k$应用于变量$x$时，相应的SSA指令将$x$赋值给与$k$的绑定变量同名的变量，并跳转到名为$k$的基本块。
+
+$\sim$关系的规则定义如图~\ref{fig:simrelation}所示。规则(1)和(3)定义了CPS中将延续应用到某个值与
+SSA程序中赋值、终止指令之间的匹配关系。规则(2)和(4)说明如果CPS程序包含类似$t$和$u$的子代码项，
+则子代码项与相应位置的SSA代码片段应递归地相关联。规则(5)定义了函数调用时的状态匹配关系。
+规则(6)和(7)展示了赋值表达式及二元算术运算表达式的匹配关系。
+规则(8)定义了与条件语句的子代码项$t_1$和$t_2$相关联的特定基本块的匹配状态。
+
+\begin{figure}[htbp]
+    \centering
+    % \small
+    \begin{gather*}
+        \tag{1} \displaystyle{\frac{\begin{matrix}
+            loc_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k\; x_1=t\; \mathbf{in}\; u}\\
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{x_1 = x}\quad
+            \mathbf{code}_{at}\; (pc+1)\; =\; \textcolor{purple}{\mathbf{br_{uc}}\; k} \end{matrix}}
+            {(\textcolor{blue}{k\; x},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa}\; x_1\mapsto x,s_{ssa})}}  \\
+        \tag{2} \displaystyle{\frac{\begin{matrix}
+            t_{cps} = \textcolor{blue}{\mathbf{letcont}\; k\; x_1=t\; \mathbf{in}\; u}\quad
+            (u,loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa}) \\
+            (t,loc_{cps}\; k\mapsto t_{cps})\sim (t_{ssa},(pc.l_f,k,0),pc,loc_{ssa},s_{ssa})\end{matrix}}
+            {(t_{cps},loc_{cps}\; k\mapsto t_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa})}} \\
+        \tag{3} \displaystyle{\frac{\begin{matrix}
+            loc_{cps}\; k = \textcolor{blue}{\mathbf{letfun}\; f\; k\; x_1=t\; \mathbf{in}\; u}\;
+            \mathtt{or}\; k=k_{init}\\
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{r_b = x}\quad 
+            \mathbf{code}_{at}\; (pc+1)\; =\; \textcolor{purple}{\mathbf{ret}\; r_b} \end{matrix}}
+            {(\textcolor{blue}{k\; x},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa}\; r_b\mapsto x,\mathbf{pop}\; s_{ssa})}}  \\
+        \tag{4} \displaystyle{\frac{\begin{matrix}
+            t_{cps} = \textcolor{blue}{\mathbf{letfun}\; f\; k\; x_1=t\; \mathbf{in}\; u} \\
+            (t,loc_{cps}\; k\mapsto t_{cps})\sim (t_{ssa},(f,b_1,0),pc,loc_{ssa},s_{ssa}) \\
+            (u,loc_{cps}\; k\mapsto t_{cps})\sim (t_{ssa},(main,b_1,0),pc,loc_{ssa},s_{ssa})\end{matrix}}
+            {(t_{cps},loc_{cps}\; k\mapsto t_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa})}} \\
+        \tag{5} \displaystyle{\frac{\begin{matrix}
+            loc_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k\; x_1=t\; \mathbf{in}\; u}\\
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{x_1 = \mathbf{call}\; f\; x}\quad
+            \mathbf{code}_{at}\; (pc+1)\; =\; \textcolor{purple}{\mathbf{br_{uc}}\; k} \end{matrix}}
+            {(\textcolor{blue}{f\; k\; x},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},\mathbf{push}\; s_{ssa}\; pc)}}  \\
+        \tag{6} \displaystyle{\frac{\begin{matrix}
+            t_{cps} = \textcolor{blue}{\mathbf{letval}\; x=v\; \mathbf{in}\; t} \quad
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{x = v} \\
+            (t,loc_{cps})\sim (t_{ssa},pc+1,ppc,loc_{ssa}\; x\mapsto v,s_{ssa}) \end{matrix}}
+            {(t_{cps},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa})}}  \\
+        \tag{7} \displaystyle{\frac{\begin{matrix}
+            t_{cps} = \textcolor{blue}{\mathbf{letop}\; x=op\; v_1\; v_2\; \mathbf{in}\; t} \quad
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{x = op\; v_1\; v_2} \\
+            (t,loc_{cps})\sim (t_{ssa},pc+1,ppc,loc_{ssa}\; x\mapsto (\mathbf{eval}_{exp}\; v_1\; v_2),s_{ssa}) \end{matrix}}
+            {(t_{cps},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa})}}  \\ 
+        \tag{8} \displaystyle{\frac{\begin{matrix}
+            t_{cps} = \textcolor{blue}{\mathbf{ifz}\; x\; t_1\; t_2} \quad
+            \mathbf{code}_{at}\; pc\; =\; \textcolor{purple}{\mathbf{icmp}\; x\; 0} \quad
+            \mathbf{code}_{at}\; (pc+1)\; =\; \textcolor{purple}{\mathbf{br_c}\; b_n\; t_n\; f_n} \\
+            (t_1,loc_{cps})\sim (t_{ssa},(pc.l_f, t_n, 0),pc,loc_{ssa},s_{ssa}) \\
+            (t_2,loc_{cps})\sim (t_{ssa},(pc.l_f, f_n, 0),pc,loc_{ssa},s_{ssa}) \end{matrix}}
+            {(t_{cps},loc_{cps})\sim (t_{ssa},pc,ppc,loc_{ssa},s_{ssa})}}  \\          
+    \end{gather*}
+    % \vspace{-0.4cm}
+    \caption{CPS与SSA程序状态之间的$\sim$关系规则}\label{fig:simrelation}
+\end{figure}
+
+\subsection{测量函数的设计}
 
 \subsection{CPS与SSA程序内部执行步骤的模拟}

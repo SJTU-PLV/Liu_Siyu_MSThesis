@@ -240,7 +240,7 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
 我们使用的目标SSA语言的语法定义如图~\ref{synssa}所示。
 顶层的翻译单元（Translation Unit）$t$由一系列函数定义组成。
 一个函数$f$包含函数名$l_1$、参数$l_2$和一系列基本代码块$\overline{b}$。
-一个基本代码块$b$由它的标签$l$、$\overline{\phi}$节点序列、指令$\overline{a}$序列和一个终止指令（terminator）$r$组成。
+一个基本代码块$b$由它的标签$l$、$\overline{\phi}$节点序列、指令$\overline{a}$序列和一个终止指令（Terminator）$r$组成。
 一条指令$a$将命令$c$的值赋给变量$x$。$c$包括值$v$、二元运算表达式、比较两个值是否相等的命令和函数调用。
 终止指令包括$\mathbf{ret}$和$\mathbf{br}$，分别用于表示函数返回和块之间的跳转。
 作为示例程序，图~\ref{factssa}展示了SSA中的阶乘函数与2的阶乘。
