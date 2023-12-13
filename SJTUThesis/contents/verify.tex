@@ -2,7 +2,7 @@
 
 \chapter{转换算法的语义保存性质证明} \label{ch:verify}
 
-\section{编译链验证框架概览}
+\section{编译链验证框架概览} \label{sec:verifyoverview}
 
 在上一节中，我们介绍了直接风格PCF程序的CPS转换以及CPS到SSA的转换算法。
 本节中我们将讨论如何对以上转换算法的正确性进行形式化验证。
@@ -29,8 +29,8 @@
     \end{tabbing}
   \end{theorem}
 
-接下来，我们通过使用第\ref{sec:compcertbackend}节中介绍的模拟技术来证明语义保存性质的相关定理。
-我们首先需要为每个转换步骤建立前向模拟，然后将前向模拟性质组合成为完整编译过程的前向模拟，
+我们通过使用第\ref{sec:compcertbackend}节中介绍的模拟技术来证明语义保存性质的相关定理。
+首先，我们需要为每个转换步骤建立前向模拟，然后将前向模拟性质组合成为完整编译过程的前向模拟，
 并利用目标语言的确定性将其转化为对安全程序的后向模拟。该证明依赖于这样一个性质，
 即终止的PCF程序总是会返回一个值（即不会陷入停滞状态）。
 由于本文中使用的是显式的变量命名方法，我们假设该属性成立并计划之后采用局部无名表示
@@ -139,6 +139,27 @@ $\mathtt{initial}(t_{cps}) = (t_{cps}, loc_{empty})$。
     \end{tabbing}
 \end{theorem}
 
+利用定理~\ref{def:fsimcps}和定理~\ref{def:fsimcps2}，我们就可以证明出CPS转换得到的
+CPS程序会有与直接风格PCF程序相同的可观察行为（Observable Behaviors），
+也就是定理~\ref{trm:cpsbhvpt}和定理~\ref{trm:cpsbhvpd}。
+
+\begin{theorem}[CPS程序对PCF程序终止行为的保存]\label{trm:cpsbhvpt} 
+    \begin{tabbing}
+     \\
+    \quad\=$\forall \; t_{pcf}\; t_{cps}\; n,\; $\=\kill
+    \>$\forall \; t_{pcf}\; t_{cps}\; n,\; t_{pcf}\Downarrow n\; \wedge \; t_{cps}=\mathcal{F}_{proc}(t_{pcf}) \Longrightarrow t_{cps}\Downarrow n.$
+    \end{tabbing}
+  \end{theorem}
+  
+  \begin{theorem}[CPS程序对PCF程序发散行为的保存]\label{trm:cpsbhvpd}
+    \begin{tabbing}
+      \\
+    \quad\=\kill
+    \>$\forall \; t_{pcf}\; t_{cps},\; t_{pcf}\Uparrow\; \wedge \; t_{cps}=\mathcal{F}_{proc}(t_{pcf})\Longrightarrow t_{cps}\Uparrow.$
+    \end{tabbing}
+  \end{theorem}
+
+
 \section{CPS到SSA转换的前向模拟} \label{sec:cpsssaforward}
 
 \subsection{CPS与SSA程序状态关系的不变式}
@@ -207,6 +228,157 @@ SSA程序中赋值、终止指令之间的匹配关系。规则(2)和(4)说明�
     \caption{CPS与SSA程序状态之间的$\sim$关系规则}\label{fig:simrelation}
 \end{figure}
 
-\subsection{测量函数的设计}
+\subsection{度量函数的设计}
+
+如第\ref{sec:verifyoverview}节中所述，我们使用在第\ref{sec:compcertbackend}节中
+介绍的星形模拟来关联CPS和SSA程序内部执行时的状态。当CPS程序处理到$\mathbf{letcont}$代码项时，
+可能会出现无限驻留问题：CPS程序需要进行一步转换，而目标SSA程序则不需要转换，就能和转换后的CPS程序状态匹配。
+为了解决无限驻留问题，我们需要为源程序的状态定义一种度量函数$M$，在源程序执行过程中，
+如果遇到目标程序驻留的情况，该度量函数需严格递减。
+在本文中，我们使用$\mathbf{letcont}$结构的数量作为该度量，如图\ref{fig:measure}所示。
+其实，从直觉上也可以感知到，只要CPS程序代码项中$\mathbf{letcont}$结构数量不是无限多，就不会出现无限驻留的情况。
+
+\begin{figure}[htbp]
+    \centering
+    \begin{equation}
+    \nonumber
+        \begin{aligned}
+            & M(t_{cps}) = \mathtt{match}\; t_{cps}\; \mathtt{with} \\
+            & \quad |\; \mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2 \Rightarrow 1 + M(t_1) + M(t_2) \\
+            & \quad |\; \mathbf{ifz}\; v\; t_1\; t_2,\; \mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2 \Rightarrow M(t_1) + M(t_2) \\
+            & \quad |\; \mathbf{letval}\; x=v\; \mathbf{in}\; t,\; \mathbf{letop}\; x=op\; x_1\; x_2\; \mathbf{in}\; t \Rightarrow M(t)\\
+            & \quad |\; k\; v,\; f\; k\; v \Rightarrow 0 \\
+        \end{aligned}
+    \end{equation}
+    \caption{CPS到SSA转换中的度量函数}\label{fig:measure}
+\end{figure}
+
 
 \subsection{CPS与SSA程序内部执行步骤的模拟}
+
+对于任何CPS程序$t_{cps}$及其经过转换得到的SSA程序$t_{ssa}$，我们定义如果它们的初始状态满足
+$\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{cps}$与$t_{ssa}$符合前向模拟性质。
+在上一节中，我们已经定义了CPS程序的初始状态。这里我们定义SSA程序的初始状态为
+$\mathtt{initial}(t_{ssa}) = (t_{ssa}, (main, empty, 0), (main, empty, 0),$ \\ $loc_{empty}, s_{empty})$，
+即$pc$指向主函数起始位置，映射$loc$和栈$s$都是空的。
+定理\ref{def:fsimssa}说明了在程序初始状态时$\sim$关系成立，我们直观地对该定理进行定义展开即可证明。
+定理\ref{trm:simustep2}说明了$\sim$关系在程序内部执行步骤中仍然成立。
+
+我们通过对$S_{cps}\rightarrow S'_{cps}$的一步转换进行归纳来证明定理~\ref{trm:simustep2}。
+在$S_{cps}\rightarrow S'_{cps}$的每一种情况下，也就是对于每一个子目标，
+我们构造一个与$S'_{cps}$满足$\sim$关系的$S'_{ssa}$，
+且能够从$S_{ssa}$经过若干步转换到达$S'_{ssa}$。
+当然，我们需要知道经过SSA目标语言的哪些小步操作语义步骤能够到达$S'_{ssa}$。
+当目标程序不进行转换就已经满足$S'_{cps}\sim S_{ssa}$的情况下，程序发生了驻留，
+我们需要证明$M(S'_{cps})<M(S_{cps})$来确保不会发生无限驻留。
+
+\begin{theorem}[CPS到SSA转换中初始状态的模拟]\label{def:fsimssa}
+    \begin{tabbing}
+      \\
+        \quad\=\kill 
+        \>$\forall\; t_{cps} \; t_{ssa},\;
+        t_{ssa}=\mathcal{G}_{proc}(t_{cps})\Longrightarrow \mathtt{initial}\; (t_{cps})
+        \sim \mathtt{initial}\; (t_{ssa}).$
+    \end{tabbing}
+  \end{theorem}
+
+  \begin{theorem}[CPS到SSA转换中程序内部执行步骤的模拟]\label{trm:simustep2}
+    \begin{tabbing}
+      \\
+    \quad\=\qquad\=$\exists\; S'_{ssa},\; $\=\kill
+    \>$\forall \; S_{cps}\; S_{ssa}\; S'_{cps},\; S_{cps}\rightarrow S'_{cps}\; \wedge \; S_{cps}\sim S_{ssa} \Longrightarrow \exists\; S'_{ssa},\; S'_{cps}\sim S'_{ssa}\; \wedge$\\
+    \>\>$(S_{ssa}\xrightarrow{+} S'_{ssa} \lor  (S_{ssa}\xrightarrow{*} S'_{ssa}\; \wedge \;  M(S'_{cps})<M(S_{cps})))$.
+    \end{tabbing}
+  \end{theorem}
+
+为了理解在前向模拟证明中程序内部执行步骤的模拟是如何工作的，我们以图~\ref{factcps}和图~\ref{factssa}中计算阶乘的CPS和SSA程序为例。
+一开始，它们的初始状态通过$\sim$相关联。根据它们的小步操作语义，下一个程序状态是：
+\begin{itemize}
+    \item $S_{cps1}:\; (\mathbf{letval}\; x_5=2\; \mathbf{in}\dots,\, loc_{empty}\; [k\mapsto fact_{cps}])$
+    \item $S_{ssa1}:\; (fact_{ssa},\, (main, b_1, 0),\, (main, empty, 0),\, loc_{empty}\; [x_5\mapsto 2],\, s_{empty})$
+\end{itemize}
+为了证明$S_{cps1}\sim S_{ssa1}$成立，我们提取$(main, b_1, 0)$位置处的指令$[x_5 = 2;]$。
+$S_{cps1}$和$S_{ssa1}$中更新后的映射分别被命名为$loc_{cps1}$和$loc_{ssa1}$。
+经过一步转换之后，CPS和SSA程序的状态变为：
+\begin{itemize}
+    \item $S_{cps2}:\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\dots, loc_{cps1})$
+    \item $S_{ssa2}:\; (fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\, s_{empty})$
+\end{itemize}
+根据图~\ref{fig:simrelation}中的规则(2)，我们需要把子代码项$(k_{init}\; y)$和$(fact\; k_2\; x_5)$
+分别与相应的SSA代码片段使用$\sim$关系匹配起来。
+\begin{itemize}
+    \item $(k_{init}\; y,\, loc_{cps1}\; [k_2\mapsto t_{cps2}])\sim $ \\ $(fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\; s_{empty})$
+    \item $ (fact\; k_2\; x_5,\, loc_{cps1}\; [k_2\mapsto t_{cps2}])\sim $ \\ $(fact_{ssa},\, (main, k_2, 0),\, (main, b_1,1),\, loc_{ssa1},\, s_{empty})$
+\end{itemize}
+第一条匹配关系可以由规则(3)建立，而第二条匹配关系则可以由规则(5)建立。
+
+如以上证明过程所示，我们可以一步步将CPS程序和SSA程序进行转换，并始终能找到它们符合$\sim$
+关系的中间状态。最终，就可以得到结论，它们都会终止并返回相同的值。
+
+与第\ref{sec:cpsforward}节中类似，利用定理~\ref{def:fsimcps}和定理~\ref{def:fsimcps2}，我们就可以证明出转换得到的
+SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n$，转换后得到的SSA程序也终止并返回$n$。
+如果CPS程序发散，转换后得到的SSA程序也发散。
+即定理~\ref{trm:ssabhvpt}和定理~\ref{trm:ssabhvpd}。
+
+\begin{theorem}[SSA程序对CPS程序终止行为的保存]\label{trm:ssabhvpt} 
+    \begin{tabbing}
+     \\
+    \quad\=$\forall \; t_{cps}\; t_{ssa}\; n,\; $\=\kill
+    \>$\forall \; t_{cps}\; t_{ssa}\; n,\; t_{cps}\Downarrow n\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{cps}) \Longrightarrow t_{ssa}\Downarrow n.$
+    \end{tabbing}
+  \end{theorem}
+  
+  \begin{theorem}[SSA程序对CPS程序发散行为的保存]\label{trm:ssabhvpd}
+    \begin{tabbing}
+      \\
+    \quad\=\kill
+    \>$\forall \; t_{cps}\; t_{ssa},\; t_{cps}\Uparrow\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{cps})\Longrightarrow t_{ssa}\Uparrow.$
+    \end{tabbing}
+  \end{theorem}
+
+\section{组合与后向模拟}
+
+将以上两节中得到的前向模拟性质相关定理进行组合，就可以得到整个编译过程的前向模拟。
+组合定理~\ref{trm:cpsbhvpt}和定理~\ref{trm:ssabhvpt}，即可证明定理~\ref{trm:topt}。
+组合定理~\ref{trm:cpsbhvpd}和定理~\ref{trm:ssabhvpd}，即可证明定理~\ref{trm:topd}。
+我们还证明了目标SSA语言的确定性，即定理~\ref{trm:ssadeter}。
+
+  \begin{theorem}[SSA程序对PCF程序终止行为的保存]\label{trm:topt} 
+    \begin{tabbing}
+     \\
+    \quad\=$\forall \; t_{pcf}\; t_{ssa}\; n,\; $\=\kill
+    \>$\forall \; t_{pcf}\; t_{ssa}\; n,\; t_{pcf}\Downarrow n\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{pcf}) \Longrightarrow t_{ssa}\Downarrow n.$
+    \end{tabbing}
+  \end{theorem}
+  
+  \begin{theorem}[SSA程序对PCF程序发散行为的保存]\label{trm:topd}
+    \begin{tabbing}
+      \\
+    \quad\=\kill
+    \>$\forall \; t_{pcf}\; t_{ssa},\; t_{pcf}\Uparrow\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{pcf})\Longrightarrow t_{ssa}\Uparrow.$
+    \end{tabbing}
+  \end{theorem}  
+
+  \begin{theorem}[SSA语言的确定性]\label{trm:ssadeter} 
+    \begin{tabbing}
+     \\
+    \quad\=$\forall \; t_{ssa}\; n_1\; n_2,\; $\=\kill
+    \>$t_{ssa}\Downarrow n_1,\; t_{ssa}\Downarrow n_2 \Longrightarrow n_1 = n_2.$
+    \end{tabbing}
+  \end{theorem}
+
+根据PCF到SSA编译过程的前向模拟及SSA目标语言的确定性，可以证明后向模拟，即定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}。
+
+对于定理~\ref{trm:bterm}，首先假设PCF源程序不能终止，由定理~\ref{trm:topd}可知编译得到的SSA目标程序也不能终止。
+但是，在定理~\ref{trm:bterm}的条件中，$t_{ssa}\Downarrow n$，SSA目标程序是终止的。
+这与假设产生了矛盾，说明原假设错误，PCF源程序能够终止。
+先将PCF源程序返回的结果值记为$m$，由定理~\ref{trm:topt}可知SSA目标程序返回的结果也是$m$。
+由于SSA语言具有确定性，对于一个SSA程序，它的返回值是固定的。
+所以，$m=n$，PCF源程序返回的结果值也是$n$，定理~\ref{trm:bterm}得证。
+
+对于定理~\ref{trm:bdiv}，假设源程序能够终止，
+就存在某个值$n$是该PCF程序的返回值。由定理~\ref{trm:topt}可知，编译后得到的SSA目标程序也会终止并返回$n$。
+这与定理~\ref{trm:bdiv}条件中的$t_{ssa}\Uparrow$相矛盾，说明原假设错误，PCF程序是发散的，定理~\ref{trm:bdiv}得证。
+
+证明了完整编译过程对安全程序的反向模拟，就能够说明该转换算法具有语义保存性质，
+转换得到的SSA程序保存了PCF源程序的语义。

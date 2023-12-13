@@ -2,6 +2,54 @@
 
 \chapter{实现与评估} \label{ch:implement}
 
-\section{转换算法的Coq实现}
+\section{编译链及定理证明的Coq实现}
 
-\section{语义保护验证的Coq实现}
+编译框架及相关定理的形式化证明使用交互式定理证明器Coq实现。Coq主要是用Ocaml实现的，
+支持数学断言的表示，并找到形式化的证明。其中，PCF语法分析器部分在OCaml中实现，
+相关代码位于Parser目录下，在顶端Coq模块中添加需要进行编译的PCF程序在Coq中的定义。
+Ocamllex和Ocamlyacc~\cite{smith2007ocamllex}是OCaml中词法和语法解析器的生成器，使用它们可以便捷地得到对PCF程序文本进行解析的OCaml代码。
+将Coq中的PCF程序添加到顶层模块后，就可以运行顶层编译模块top.v，将源程序编译到SSA程序。
+
+PCF程序到SSA程序的两步转换算法及正确性验证均在Coq中实现，位于文件夹FrontEnd目录下。
+由SSA程序生成LLVM IR代码的过程也在Coq中进行实现，因为经验证的LLVM，即Vellvm也是在Coq中实现。
+将Coq中的SSA程序直接编译到Vellvm中的抽象语法树，即可生成LLVM IR程序。
+
+在编译算法正确性证明过程中使用的小步操作语义是关系型的，即两个程序状态之间的关系。
+这样的设计对于证明来说很方便，但是无法直接运行程序得到结果。
+为了对操作语义和转换算法进行初步测试，使用Coq为三种语言分别构建解释器（Interpreter），
+从而能够执行相应的程序，得到程序返回的结果。其中，发散的定义要取决于对最大步数的限定，即解释器的fuel。
+解释器每走一步都会消耗一个fuel，如果fuel消耗完程序还没有终止或出错，就可以认为程序发散了，返回超时状态（Timeout）。
+进行解释器测试主要是为了找出操作语义和转换算法中的问题，为接下来的证明减少阻碍。形式化验证过程本身与解释器没有关系。
+
+\section{各部分Coq代码评估}
+
+各主要模块类别和内容的代码行数（Lines of Code, LOC）如下表~\ref{tabeval}。可以看到，相关定理的证明即转换算法验证部分是工作量占比最大的。
+
+\begin{table}
+    \linespread{1.25}
+    \small
+    \centering
+    % \vspace{-20pt}
+    \caption{Coq代码LOC评估}\label{tabeval}
+    \begin{center}
+    \begin{tabular}{|l|l|l|l|}
+    \hline
+    代码类别 & 代码实现内容 & LOC & 行数占比(\%) \\
+    \hline
+    \multirow{3}{*}{程序语言定义} & PCF & 171 & \multirow{3}{*}{23.9} \\
+        & CPS & 228 & \\
+        & SSA & 303 & \\
+        \hline
+    \multirow{3}{*}{转换算法} & PCF$\rightarrow$CPS & 148 & \multirow{3}{*}{24.5} \\
+        & CPS$\rightarrow$SSA & 251 & \\
+        & SSA$\rightarrow$LLVM IR & 318 & \\
+        \hline
+    \multirow{4}{*}{形式化验证} & PCF$\rightarrow$CPS前向模拟 & 364 & \multirow{4}{*}{51.6} \\
+        & CPS$\rightarrow$SSA前向模拟 & 696 & \\
+        & 前向模拟组合 & 49 & \\
+        & 后向模拟 & 404 & \\
+        \hline
+    \end{tabular}
+    \end{center}
+\end{table}
+
