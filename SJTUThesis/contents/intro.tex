@@ -12,6 +12,7 @@
 由编译器引入的问题，对于安全关键系统而言是需要考虑的。
 工业界长期以来对保障编译器正确性这个问题非常重视。例如，按照航空领域的RTCA DO178B/C标准~\cite{brosgol2010178c}，
 需要按照和机载软件一样的严格要求对待编译器。
+
 对于庞大的编译器，通过测试找到它的错误其实是比较困难的。
 编译器随机测试工具Csmith~\cite{csmith2011}已经发现了四百多个编译器错误，可见编译器中隐藏的风险数量之大。
 
@@ -19,6 +20,19 @@
 一个著名的例子是经过验证的C编译器CompCert~\cite{leroy2009formally}，
 它将C语言的一个有代表性的重要子集编译到了支持多种处理器架构的汇编代码（包括PowerPC、ARM、X86和RISC-V）。
 其编译过程的正确性（即目标汇编程序保存了源C程序的语义）经过了形式化验证，并在Coq定理证明器中实现。
+Csmith测试过的所有C语言编译器中，只有CompCert经过验证的部分是没有发现编译器错误的~\cite{csmith2011}。
+在其他被测试的主流C语言编译器中间端都存在的错误，只有在CompCert中不存在。
+并且，研究者们已经花费了大约六个CPU年去让Csmith寻找CompCert中的错误。
+这样的结果有力地说明了，经过形式化验证的编译器在正确性和可靠性上具有重要地位。
+
+CompCert已被应用于诸如核电站控制软件和飞行控制系统的开发。
+清华大学王生原、尚书等人设计并实现了基于CompCert的L2C编译器~\cite{shang2017key}，被用于安全关键的工业领域。
+L2C的源语言是被广泛用于安全关键的工业领域（高铁、核电站等）的Lustre，
+这些类型的应用对开发工具本身的安全性要求很高。它的目标语言是ComperCert中使用的C子集Clight。
+南京大学冯新宇等人针对并发程序进行了单独编译验证~\cite{jiang2019towards}。他们提出了独立于语言的验证框架，
+将顺序程序与无竞赛并发程序编译器验证工作联系起来，从而使针对顺序程序的编译器验证工作可以被重用。
+使用这种框架，他们建立了CASCompCert。它扩展了ComperCert，可以对无竞赛Clight并发程序的单独编译进行验证，
+且允许将并发Clight模块与包含良性竞赛的同步原语的x86-TSO实现进行连接。
 
 延续传递风格（Continuation-Passing Style, CPS）是一种函数式程序的中间语言（Intermediate Representation, IR），
 它明确了函数式程序的控制流，从而为程序基于控制流的分析和优化提供了便利。
@@ -184,8 +198,8 @@ SSA中的控制流图对应着函数式编程中的函数，虽然顶层延续�
 Kelsey~\cite{kelsey1995correspondence}通过将CPS中的$\lambda$进行标注来区分完整过程、跳转、延续，
 进而将被这种标注的CPS程序转换为一种SSA程序。然而，Kelsey工作中的CPS和SSA语言与本文中所使用的差距较大。
 Kelsey的CPS语言将二元表达式的参数和条件语句中的条件视为表达式，使其更类似于带有延续元素的标准函数式程序。
-例如，在Kelsey的工作中，表达式$k; ((x+y)+z)$是允许的，但在我们的工作中，
-它必须转换为$\mathbf{letop}; x_0 = x+y; \mathbf{in}; (\mathbf{letop}; x_1 = x_0+z; \mathbf{in}; k; x_1)$。
+例如，在Kelsey的工作中，表达式$k\; ((x+y)+z)$是允许的，但在我们的工作中，
+它必须转换为$\mathbf{letop}\; x_0 = x+y\; \mathbf{in}\; (\mathbf{letop}\; x_1 = x_0+z\; \mathbf{in}\; k\; x_1)$。
 此外，Kelsey的转换算法选择先合并CPS过程，然后再将其作为整体进行转换。
 因此，SSA程序的顶层单元是一整个过程，没有函数调用，这与本文中使用的基于LLVM IR的SSA语言不同。
 
@@ -193,15 +207,6 @@ Kelsey的CPS语言将二元表达式的参数和条件语句中的条件视为�
 
 我们使用CompCert~\cite{leroy2009formally}基于模拟（Simulation）技术的形式化验证框架来证明转换过程的正确性。
 经过形式化验证的C语言子集编译器CompCert是由INRIA的Xavier Leroy领导开发的，在Coq定理证明工具中实现。
-
-CompCert已被应用于诸如核电站控制软件和飞行控制系统的开发。
-清华大学王生原、尚书等人设计并实现了基于CompCert的L2C编译器~\cite{shang2017key}，被用于安全关键的工业领域。
-L2C的源语言是被广泛用于安全关键的工业领域（高铁、核电站等）的 Lustre，
-这些类型的应用对开发工具本身的安全性要求很高。它的目标语言是ComperCert中使用的C子集Clight。
-南京大学冯新宇等人针对并发程序进行了单独编译验证~\cite{jiang2019towards}。他们提出了独立于语言的验证框架，
-将顺序程序与无竞赛并发程序编译器验证工作联系起来，从而使针对顺序程序的编译器验证工作可以被重用。
-使用这种框架，他们建立了CASCompCert。它扩展了ComperCert，可以对无竞赛Clight并发程序的单独编译进行验证，
-且允许将并发Clight模块与包含良性竞赛的同步原语的x86-TSO实现进行连接。
 
 CompCert提供了一套基于模拟技术验证编译过程正确性的理论和框架。该框架将编译过程的正确性定义为
 语义保存性质（Semantic Preservation Property），即目标程序的行为应该与源程序的行为一致。
@@ -220,11 +225,17 @@ CompCert提供了一套基于模拟技术验证编译过程正确性的理论和
 则对于所有的可观察行为$B$，$\mathcal{T}(P_1) \Downarrow B \Longrightarrow P_1 \Downarrow B$。
 
 然而，直接证明后向模拟是比较困难的。可以先建立从安全源程序到目标程序的前向模拟（Forward Simulation），
-再根据目标程序的确定性和前向模拟来推导出后向模拟。
+再根据目标程序的确定性和前向模拟来推导出后向模拟。这些不同的语义保存性质之间的关系如图\ref{fig:relation}所示。
 安全源程序的前向模拟可以表示为：如果$P_1$是一个安全程序，则对于所有的$B$，
 $P_1 \Downarrow B \Longrightarrow \mathcal{T}(P_1) \Downarrow B$。
 由于目标程序是确定性的（Deterministic），它只与一种行为相关联。
 因此，目标程序不会具有$P_1$没有的额外行为。在这种情况下，可以从前向模拟中导出安全程序的后向模拟。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/relation.pdf}
+    \caption{语义保存性质关系}\label{fig:relation}
+\end{figure}
 
 为了证明源语言$L_1$转换为目标语言$L_2$的编译过程满足前向模拟性质，
 关键在于建立程序状态$S_1$和$S_2$之间的不变式（Invariant）$S_1\sim S_2$，
