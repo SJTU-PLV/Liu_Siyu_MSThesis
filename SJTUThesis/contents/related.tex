@@ -43,21 +43,34 @@ miniML经验证的编译器也使用了CompCert框架，将其编译到了CompCe
     \item \textbf{Gallina经验证的编译器CertiCoq：} 
     CertiCoq将Gallina编译到了C语言的子集Clight，以便与CompCert链接起来并最终编译到汇编语言，
     从而获得一个完整的经过验证的编译链~\cite{belanger2019certified,zoe-oopsla2021,zoe-icfp2021}。
+    在CertiCoq中，源程序被转换为CPS形式后，经历了反柯里化（Uncurrying）、$\lambda$提升（$\lambda$ Lifting）
+    等优化~\cite{li2018verifying}，并进行了闭包转换（Closure Conversion）~\cite{paraskevopoulou2019closure}，
+    确保函数没有包含非全局作用域的自由变量。之后，经过前述处理后得到的CPS程序就被转换到了Clight。
+    尽管CertiCoq中使用的CPS语言，即L6语言，是一种纯函数式的语言，但是经过了前述的转换过程，
+    研究者们能够较为直接地找出它与Clignt的对应关系。
+    L6程序中的一个函数就对应着Clight中的一个函数。L6中所有的调用都是尾调用（Tail Call），并且C语言
+    编译器CompCert实现了尾调用优化，可以将尾调用转换为跳转，不用创建新的栈帧。
+    由于C语言没有自动的垃圾收集器（Garbage Collection），CertiCoq构造了与经验证的收集器的接口，
+    并验证了该接口的正确性~\cite{wang2019certifying}。
+
     从CPS到Clight的编译过程及其形式化证明在Coq中实现，不过其使用的是大步操作语义而不是小步操作语义。
+    其转换算法的正确性也使用了基于模拟的方法进行证明，证明了L6到Clight程序的前向模拟性质。
     该编译器的目标语言不是基于SSA的，因此不能直接连接到LLVM框架，也不能利用基于SSA中间语言的优化。
     \item \textbf{miniML经验证的编译器前端MLCompCert：} 
     MLCompCert是Zaynah Dargaye等人设计的一个经验证的编译器前端~\cite{dargaye2009verification}。
     它的源语言是ML纯函数式语言的部分，即miniML，包括了$\lambda$演算、$let$绑定、模式匹配等。
     它的目标语言是CompCert编译器后端的中间语言Cminor，即一种类似于C语言的底层语言。
-    该编译器实现了一些经典的函数式程序编译优化，例如反柯里化（uncurrying）和统一数据结构表示等。
+    该编译器实现了一些经典的函数式程序编译优化，例如反柯里化和统一数据结构表示等。
     设计者们在Coq中对该函数式程序编译器前端进行了实现和验证。
     \item \textbf{经验证的函数式语言编译器CakeML：} 
-    该编译器使用的源程序CakeML贴近实际中使用的函数式编程语言~\cite{cakeml2016}。
-    它支持高效的柯里化多参数函数、可配置的数据表示、展开调用栈的异常、寄存器分配等功能。
-    该编译器的开发过程在HOL4定理证明工具中完成。
+    该编译器使用的源程序CakeML语言贴近实际中使用的函数式编程语言~\cite{cakeml2016}。
+    它支持用户定义的模块、相互递归函数和模式匹配（Pattern Matching）等语言特性。
+    CakeML编译器支持高效的柯里化多参数函数、可配置的数据表示、展开调用栈的异常、寄存器分配等功能。
+    经过十几种中间语言的编译及优化过程，它最终将函数式语言编译到了机器码，支持32位及64位的ARM、RISC-V等不同架构。
     CakeML编译器为了提升寄存器分配的性能，会在进行寄存器分配之前对程序使用一个类似SSA化的转换，
     减小变量的生存期。由此转换步骤产生的程序并不严格符合SSA形式，它没有$\phi$函数。
     它使用隐式的$\phi$函数消除，用变量的移动替换$\phi$函数。
+    该编译器的开发过程在HOL4定理证明工具中完成。
 \end{itemize}
 
 
