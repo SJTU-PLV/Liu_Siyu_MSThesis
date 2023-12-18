@@ -54,6 +54,8 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 和相互转换~\cite{farvardin2020new,kelsey1995correspondence}，
 但如何对转换算法进行形式化验证仍然是待解决的问题。
 
+\section{主要贡献与章节安排}
+
 本文的主要贡献总结如下：
 
 \begin{itemize}
@@ -75,9 +77,11 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 \end{itemize}
 
 在本章接下来的内容中，我们首先在\ref{sec:background}节介绍必要的相关背景知识，
-并在第\ref{sec:overview}节简要介绍了该部分经验证的PCF编译器原型。
-在第\ref{ch:related}章中，我们讨论了领域内与本课题相关的工作。
-我们在第\ref{ch:trans}章中讨论了CPS转换和CPS到SSA的转换算法设计，
+包括函数式语言中的直接风格与延续传递风格、静态单赋值及其与延续传递风格的关系。
+我们还介绍了基于模拟技术的编译器形式化验证框架。
+在第\ref{sec:overview}节中，我们简要介绍了本文中构建的部分经验证的PCF编译器原型的各个组成部分。
+在第\ref{ch:related}章中，我们讨论了领域内与本课题相关的工作，
+包括一些经验证的函数式编译器和与静态单赋值中间语言有关的工作。
 并在第\ref{ch:verify}章中对该编译链进行形式化验证。
 本文工作在Coq中的实现和评估将在第\ref{ch:implement}章中介绍。
 最后,我们在第\ref{ch:summary}章中对本文内容进行总结。
@@ -109,7 +113,7 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 由于PCF可以看作是工业用函数式编程语言的核心，本文的研究结果可被推广至其他函数式语言。
 关于PCF语言的更多特性将在第\ref{sec:cps}节中详述。
 
-\subsection{延续传递风格与静态单赋值} \label{sec:bg_cpsssa}
+\subsection{延续传递风格} \label{sec:bg_cps}
 
 函数式程序的形式有很多种，如直接风格（Direct Style）和延续传递风格（CPS）。
 图~\ref{cpsdirect}展示了同样含义的函数式程序在这两种不同表示风格下的例子。
@@ -157,10 +161,15 @@ CPS是函数式语言编译器中常见的中间表示形式。
     \caption{直接风格和CPS形式的示例函数式程序}\label{cpsdirect}
   \end{figure}
 
+CPS形式函数式程序的使用可以追溯到Scheme的编译器中~\cite{steele1978rabbit}。
+之后，它被应用到了SML-New Jersey编译器的基本框架中~\cite{shao1995type}。
 Plotkin~\cite{plotkin1977lcf}、Danvy和Nielsen\cite{danvy2007one}等人研究了将直接风格的函数式程序转换为CPS程序的方法。
 其中Plotkin的方法需要后续进行管理性缩减（Administrative Reduction），以去除冗余的$\lambda$结构。
 Felleisen等人提出了另一种方法非组合式的方法，其基于$\lambda$-演算的语义。
 Danvy和Nielsen将这两种方法联系起来，可以只通过一步转换完成，不需要在后续过程中进行管理性缩减。
+
+
+\subsection{静态单赋值} \label{sec:bg_ssa}
 
 静态单赋值（SSA）是命令式语言编译器中一种广泛使用的中间语言类型。
 在SSA中，每个变量只能在一处被赋值，且被使用之前必须已经被赋值。
@@ -195,6 +204,7 @@ $let$绑定与变量定义点之间的对应关系还延续到了程序结构的
 与命令式语言中的返回地址或函数指针相似，延续指定了当前代码片段求值完成后程序下一步该如何执行。
 SSA中的控制流图对应着函数式编程中的函数，虽然顶层延续的参数在控制流图中并不是明确可见的，
 但它对应一个命令式调用中用来保存返回地址的地方。
+
 Kelsey~\cite{kelsey1995correspondence}通过将CPS中的$\lambda$进行标注来区分完整过程、跳转、延续，
 进而将被这种标注的CPS程序转换为一种SSA程序。然而，Kelsey工作中的CPS和SSA语言与本文中所使用的差距较大。
 Kelsey的CPS语言将二元表达式的参数和条件语句中的条件视为表达式，使其更类似于带有延续元素的标准函数式程序。
@@ -204,6 +214,81 @@ $\mathbf{letop}\; x_0 = x+y\; \mathbf{in}\; (\mathbf{letop}\; x_1 = x_0+z\; \mat
 此外，Kelsey的转换算法选择先合并CPS过程，然后再将其作为整体进行转换。
 因此，SSA程序的顶层单元是一整个过程，没有函数调用，这与本文中使用的基于LLVM IR的SSA语言不同。
 
+\subsection{小步操作语义} 
+
+为了对编译算法的正确性进行验证，首先需要将程序与其运算过程用形式化的方法联系起来。
+接下来我们将介绍对程序代码项的求值过程进行精确定义的方法，即定义程序的语义。
+形式化定义的程序语义可以分为三种基本的类型：操作语义（Operational Semantics）、
+指称语义（Denotational Semantics）和公理语义（Axiomatic Semantics）\cite{pierce2002types}。
+
+其中，指称语义比较抽象，它将代码项视作一些数学对象，比如数字和函数。
+找到指称语义需要找到语义域的集合，然后定义解释函数，将代码项映射到语义域元素中。
+公理语义则不是定义程序的行为，而是把规则本身作为语言的定义，即代码项本身的含义就是可以被证明的东西。
+操作语义是通过直接描述程序执行时行为来定义语义的，而不是像指称语义那样给其附加数学意义。
+为了描述程序的行为，操作语义为程序语言定义了一个简单的抽象机器（Abstract Machine），
+程序的状态是它的代码项和一些附加信息内容。对于程序的每一个状态来说，
+要么可以通过对代码项进行化简得到下一个状态，要么宣告机器停机。
+操作语义将程序描述为一系列的计算步骤。对于函数式程序，会终止的计算序列在最后一步返回程序的值。
+
+操作语义分为大步操作语义和小步操作语义。大步语义描述程序执行的整体结果，
+小步语义则描述一个执行计算步骤。大步语义描述的下一个状态往往需要多个小步语义转换步骤实现。
+本文中使用的是小步操作语义（Small-Step Operational Semantics）。
+
+使用$\rightarrow $表示一步计算步骤，它是程序状态之间最小的二元关系。
+使用$\xrightarrow{*} $表示多步计算步骤，即一步计算的自反传递闭包。
+那么，以简单的布尔值条件语句为例，它的小步语义和大步语义区别如图\ref{fig:bigsmall}。
+可以看到，在小步操作语义中，语义规则可以分为计算型规则（Computation Rules）
+和聚合型规则（Congruence Rule）。S\_If\_True和S\_If\_False属于计算型规则。
+S\_If\_True意为，如果条件代码项的值是true，表达式可以经过一步转换变为$t_2$代码项。
+同理，S\_If\_False规则表示在条件为false时转换到$t_3$。
+S\_If则属于聚合型规则，意为如果$t_1$经过一步转换步骤变为$t'_1$，
+那么整个条件语句会变成条件为$t'_1$的代码项。它并没有做真正的求值工作，没有决定程序下一步向哪个分支走，
+但是它告诉了程序应当先去对条件语句的哪个部分进行进一步计算。
+如果没有S\_If的帮助，我们就无法知道$t_1$、$t_2$和$t_3$中要先对谁求值。
+大步操作语义则更加接近人类对程序运行自然的理解，也被称为自然语义。
+B\_If\_True说明如果$t_1$经过若干步求值可以化简为true，那么下一个状态转换到代码项$t_2$。
+B\_If\_False则相反。
+
+一种语言可以有多种操作语义，即有不同的抽象机器，它们在执行同一程序时的行为是一致的。
+对于不同的语言，证明它们的操作语义定义的抽象机器在执行某一程序及其转换后得到的程序时的行为是一致的，
+则证明了转换过程的正确性。
+
+\begin{figure}[htbp]
+    \vspace{13pt}
+    \centering
+    \begin{subfigure}[b]{0.8\textwidth}
+        条件表达式示例语法：
+        \begin{align*}
+        v\, := &\,  true\; |\; false \\
+        t\, := & \, v\; |\; \mathbf{if}\; t\; \mathbf{then}\; t\; \mathbf{else}\; t
+        \end{align*}
+    \end{subfigure}
+    \vfill
+    \begin{subfigure}[b]{0.8\textwidth}
+        小步操作语义：
+    \begin{equation}
+        \setlength{\jot}{10pt}
+        \nonumber
+            \begin{aligned}
+            & \text{S\_If\_True} \qquad \mathbf{if}\; true\; \mathbf{then}\; t_2\; \mathbf{else}\; t_3\rightarrow t_2 \\
+            &  \text{S\_If\_False} \qquad \mathbf{if}\; false\; \mathbf{then}\; t_2\; \mathbf{else}\; t_3\rightarrow t_3 \\
+            & \text{S\_If} \qquad \displaystyle{\frac{t_1\rightarrow t'_1}{\mathbf{if}\; t_1\; \mathbf{then}\; t_2\; \mathbf{else}\; t_3\rightarrow \mathbf{if}\; t'_1\; \mathbf{then}\; t_2\; \mathbf{else}\; t_3 }}
+        \end{aligned}
+    \end{equation}
+      大步操作语义：
+        \begin{equation}
+            \setlength{\jot}{10pt}
+            \nonumber
+            \begin{aligned}
+                & \text{B\_If\_True} \qquad \displaystyle{\frac{t_1\xrightarrow{*} true\quad t_2\xrightarrow{*} v_2}{\mathbf{if}\, t_1\, \mathbf{then}\, t_2\, \mathbf{else}\, t_3\xrightarrow{*} v_2 }} \\       
+                & \text{B\_If\_False} \qquad \displaystyle{\frac{t_1\xrightarrow{*} false\quad t_3\xrightarrow{*} v_3}{\mathbf{if}\, t_1\, \mathbf{then}\, t_2\, \mathbf{else}\, t_3\xrightarrow{*} v_3 }}
+            \end{aligned}
+        \end{equation}
+    \end{subfigure}
+    \caption{小步操作语义与大步操作语义区别示例}\label{fig:bigsmall}
+\end{figure}
+
+
 \subsection{编译器形式化验证} \label{sec:compcertbackend}
 
 我们使用CompCert~\cite{leroy2009formally}基于模拟（Simulation）技术的形式化验证框架来证明转换过程的正确性。
@@ -211,7 +296,7 @@ $\mathbf{letop}\; x_0 = x+y\; \mathbf{in}\; (\mathbf{letop}\; x_1 = x_0+z\; \mat
 
 CompCert提供了一套基于模拟技术验证编译过程正确性的理论和框架。该框架将编译过程的正确性定义为
 语义保存性质（Semantic Preservation Property），即目标程序的行为应该与源程序的行为一致。
-我们将程序的行为（Behaviors）描述为由小步操作语义（Small-Step Operational Semantics）生成的轨迹（Trace），
+我们将程序的行为（Behaviors）描述为由小步操作语义生成的轨迹（Trace），
 以便直接推导出编译器的正确性证明。根据CompCert中对语义保存性质的讨论，
 通过为安全的源程序建立后向模拟（Backward Simulaion），可以证明语义保存性质。
 
@@ -256,13 +341,13 @@ P_1 \Downarrow B \Longrightarrow \mathcal{T}(P_1) \Downarrow B.
 \begin{figure}[ht]
     % \vspace{-10pt}
     \centering
-    \begin{subfigure}[b]{0.26\textwidth}
+    \begin{subfigure}[b]{0.3\textwidth}
         % \flushleft
         \includegraphics[width=1\linewidth]{figures/plusstep.pdf}
         \caption{多步模拟}
         \label{fig:plus}
     \end{subfigure}
-    \begin{subfigure}[b]{0.52\textwidth}
+    \begin{subfigure}[b]{0.6\textwidth}
         % \flushright
         \includegraphics[width=1\linewidth]{figures/starstep2.pdf}
         \caption{星形模拟}
@@ -344,4 +429,4 @@ CPS转换及CPS到SSA转换的正确性通过源程序和目标程序之间的�
 SSA程序被转换为Vellvm中的抽象语法树，然后转换为LLVM IR程序文本。
 在该编译链中，我们使用了经过验证的LLVM基础设施Vellvm~\cite{zakowski2021modular}）。
 利用其在Coq实现的LLVM IR的抽象语法树，我们可以进一步输出最终的LLVM IR程序。
-
+由于我们使用的SSA语言是LLVM IR的简化版本，

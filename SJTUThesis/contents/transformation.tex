@@ -179,7 +179,7 @@ $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun
 
 \subsection{直接风格PCF语言的CPS转换} \label{sec:cpstrans}
 
-如第\ref{sec:bg_cpsssa}节中所述，函数式语言的编译器通常会将直接风格的源程序转换为CPS形式，
+如第\ref{sec:bg_cps}节中所述，函数式语言的编译器通常会将直接风格的源程序转换为CPS形式，
 即进行CPS转换（CPS Transformation）。本节中，我们将介绍把PCF源程序转换为CPS形式的编译算法。
 该算法遵循CPS转换的一般模式~\cite{plotkin1975call,danvy2007one}，根据计算的层次顺序递归地解构处理PCF代码项。
 例如，如果PCF代码项$t$的计算步骤可以有序地分为对$t_1$和$t_2$的计算，
