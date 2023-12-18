@@ -16,20 +16,24 @@
 它的大体编译流程如图\ref{fig:compcert}所示。该编译链中省略了一些编译步骤，主要保留了之后介绍
 基于CompCert的工作时需要了解的中间语言和编译步骤。
 本文中的工作所使用的基于模拟的验证技术是CompCert框架中提供的。
-
-CompCertSSA是CompCert的一个扩展，具有一个基于SSA的中间端~\cite{compcertssa}。
-它将SSA作为一种可选的优化中间语言，允许在RTL（Register Transfer Language）三地址代码和SSA中间语言之间进行转换。
-虽然这使得CompCert能够实现一些基于SSA的优化~\cite{compcertssa-op,blazy-cpp2023}，
-但是CompCertSSA提供的优化仍然比较有限，不能与LLVM的后端优化相媲美。
-本文中的SSA目标语言选择了接近LLVM中间语言的形式，也是为了对经验证的函数式语言编译器复用LLVM后端优化提供基础。
-不过，它提供了一个从C语言开始的经过完整验证的编译链，是开发针对SSA的经验证的函数式编译器的有力工具。
-
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\linewidth]{figures/compcert.pdf}
     \caption{CompCert编译链概览}\label{fig:compcert}
 \end{figure}
 
+CompCertSSA是CompCert的一个扩展，具有一个基于SSA的中间端~\cite{compcertssa}。
+它将SSA作为一种可选的优化中间语言，允许在RTL（Register Transfer Language）三地址代码和SSA中间语言之间进行转换。
+CompCertSSA将RTL语言转换为SSA，经过全局值编号（Global Value Numbering，GVN）优化，再转换回RTL。
+GVN优化是指对相同值的变量赋予相同的编号，从而消除冗余的计算。这里的SSA程序状态与RTL程序状态类似，
+但是寄存器和当前函数类型要进行修改。在CompCertSSA中，$\phi$函数没有放在基本代码块中，
+$\phi$指令代码块与普通指令构成的基本块是平行的结构。它们的语义也是平行定义的，
+对基本代码块的控制流图定义了小步操作语义，对$\phi$指令代码块定义了大步操作语义。
+
+虽然这使得CompCert能够实现一些基于SSA的优化~\cite{compcertssa-op,blazy-cpp2023}，
+但是CompCertSSA提供的优化仍然比较有限，不能与LLVM的后端优化相媲美。
+本文中的SSA目标语言选择了接近LLVM中间语言的形式，也是为了对经验证的函数式语言编译器复用LLVM后端优化提供基础。
+不过，它提供了一个从C语言开始的经过完整验证的编译链，是开发针对SSA的经验证的函数式编译器的有力工具。
 
 
 \section{经验证的函数式编译器} \label{sec:relatedf}

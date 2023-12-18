@@ -8,7 +8,10 @@
 本节中我们将讨论如何对以上转换算法的正确性进行形式化验证。
 给定一个PCF程序$t_{pcf}$，首先通过$\mathcal{F}_{proc}$将其转换为CPS程序，
 然后再使用$\mathcal{G}_{proc}$把CPS程序转换为SSA程序$t_{ssa}$。
-将两步转换算法合并之后完整的转换函数表示为$Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf}))$。
+将两步转换算法合并之后完整的转换函数表示为
+\begin{equation}
+Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
+\end{equation}
 如第\ref{sec:compcertbackend}节中所介绍，转换算法的语义保存性质可由定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}表示，
 其中$t \Downarrow n$表示$t$会终止并返回$n$，$t \Uparrow$表示$t$会发散。
 如果转换后得到的SSA程序终止并返回$n$，则PCF程序也终止并返回$n$。另一方面，如果SSA程序发散，则PCF程序也发散。
@@ -112,8 +115,11 @@
 
 对于任何PCF程序$t_{pcf}$和转换后得到的CPS程序$t_{cps}$，$\sim$关系应该在它们的
 初始状态（Initial State）下成立。
-它们的初始状态被定义为$\mathtt{initial}(t_{pcf}) = (t_{pcf}, ctx_{stop})$和
-$\mathtt{initial}(t_{cps}) = (t_{cps}, loc_{empty})$。
+它们的初始状态被定义为
+\begin{equation}
+\mathtt{initial}(t_{pcf}) = (t_{pcf}, ctx_{stop}),\quad
+\mathtt{initial}(t_{cps}) = (t_{cps}, loc_{empty}).
+\end{equation}
 
 在程序内部执行步骤的模拟中，我们使用多步模拟（Plus Simulation）来关联PCF和CPS程序状态的转换过程，
 而不必担心无限驻留（Infinite Stuttering）问题。正如定理~\ref{def:fsimcps2}所示，
@@ -259,7 +265,9 @@ SSA程序中赋值、终止指令之间的匹配关系。规则(2)和(4)说明�
 对于任何CPS程序$t_{cps}$及其经过转换得到的SSA程序$t_{ssa}$，我们定义如果它们的初始状态满足
 $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{cps}$与$t_{ssa}$符合前向模拟性质。
 在上一节中，我们已经定义了CPS程序的初始状态。这里我们定义SSA程序的初始状态为
-$\mathtt{initial}(t_{ssa}) = (t_{ssa}, (main, empty, 0), (main, empty, 0),$ \\ $loc_{empty}, s_{empty})$，
+\begin{equation}
+\mathtt{initial}(t_{ssa}) = (t_{ssa}, (main, empty, 0), (main, empty, 0),loc_{empty}, s_{empty}).
+\end{equation}
 即$pc$指向主函数起始位置，映射$loc$和栈$s$都是空的。
 定理\ref{def:fsimssa}说明了在程序初始状态时$\sim$关系成立，我们直观地对该定理进行定义展开即可证明。
 定理\ref{trm:simustep2}说明了$\sim$关系在程序内部执行步骤中仍然成立。

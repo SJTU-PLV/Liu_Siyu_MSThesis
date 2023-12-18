@@ -100,7 +100,10 @@ $\mathbf{letfun}\; f\; k\; x = t_1\; \mathbf{in}\; t_2$构造一个返回延续�
 
 接下来，我们需要为以上所介绍的PCF语言提供小步操作语义。
 $S\rightarrow S'$表示执行一步操作可以使程序从初始状态$S$到达状态$S'$。
-在直接风格的PCF程序中，程序状态之间的转换步骤表示为$(t_{pcf},ctx)\rightarrow (t'_{pcf},ctx')$。
+在直接风格的PCF程序中，程序状态之间的转换步骤表示为：
+\begin{equation}
+(t_{pcf},ctx)\rightarrow (t'_{pcf},ctx').
+\end{equation}
 $t_{pcf}$表示的是正在被求值（Evaluate）的表达式的PCF代码项。
 $ctx$是一个包含代码项序列的上下文（Context），用于在当前$t_{pcf}$的求值完成后进行下一步执行操作。
 当$ctx = ctx_{stop}$时，程序执行在$t_{pcf}$求值完成后即可结束。否则，当$ctx = ctx_{seq}\; t\; ctx$，
@@ -137,7 +140,10 @@ $\mathbf{let}$表达式在$t_2$中用代码项$t_1$的值替换变量$x$。
     \caption{直接风格的PCF语言小步操作语义转换规则} \label{pcfopsem}
 \end{figure}
 
-CPS形式的PCF语言的小步操作语义表示为形如$(t_{cps},loc_{cps})\rightarrow(t'_{cps},loc'_{cps})$的推导规则。
+CPS形式的PCF语言的小步操作语义表示的推导规则形如
+\begin{equation}
+(t_{cps},loc_{cps})\rightarrow(t'_{cps},loc'_{cps}).
+\end{equation}
 同样的，$t_{cps}$是正在被计算的CPS代码项，$loc_{cps}$是从延续变量名或函数名到引入它们的代码项的映射（Mapping）。
 $t'_{cps}$和$loc'_{cps}$分别是更新后的CPS代码项和映射。
 CPS形式的PCF语言的小步操作语义转换规则如图~\ref{cpsopsem}所示。
@@ -263,7 +269,10 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
     \caption{SSA语言中的阶乘程序}\label{factssa}
 \end{figure}
 
-目标SSA语言的小步操作语义表示为形如$(pc, ppc, loc_{ssa}, s_{ssa}) \rightarrow (pc', ppc', $ \\ $loc'_{ssa}, s'_{ssa})$的推导规则。
+目标SSA语言的小步操作语义规则表示为
+\begin{equation}
+(pc, ppc, loc_{ssa}, s_{ssa}) \rightarrow (pc', ppc', loc'_{ssa}, s'_{ssa}).
+\end{equation}
 $pc$是程序计数器（Program Counter），用于定位当前指令，由三个元素$(l_{f}, l_b, n)$组合而成。
 其中，$l_{f}$是当前函数标签，$l_b$是当前基本代码块标签，$n$表示基本块中指令的位置。
 可以使用$\mathbf{code}_{at}\; pc$获取$pc$位置处的指令。$ppc$存储了上一个块中进行跳转之前的程序计数器值，
