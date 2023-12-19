@@ -86,15 +86,34 @@ miniML经验证的编译器也使用了CompCert框架，将其编译到了CompCe
 
 \begin{itemize}
     \item \textbf{LLVM编译器框架：} 
-    CertiCoq将Gallina编译到了C语言的子集Cligh
+    作为当今被广泛使用的主流编译器基础设施，LLVM（Low-Level Virtual Machine）编译器框架
+    使用与程序执行平台无关的中间语言~\cite{lattner2004llvm}。这种中间语言是静态单赋值的，即每个变量只被赋值一次。
+    基于LLVM框架的编译器在编译速度和目标程序的性能方面都有出色的表现，因此被广泛应用于学术界和工业界。
+    如图~\ref{fig:llvm}所示，基于LLVM的编译器需要将源程序编译到LLVM IR。LLVM会提供针对LLVM IR程序的静态分析与优化工具，
+    并能够将处理后的LLVM IR程序编译到不同目标架构的机器代码（包括x86、ARM等）。
+    除了C和C++语言的编译器Clang的前端~\cite{lattner2008llvm}，还有很多其他程序语言的编译器也使用LLVM框架。
+    例如Haskell、Swift、Rust等语言也使用了将程序编译到LLVM中间语言的编译器，从而复用其后端~\cite{liu2013intel,zhang2012swift}。
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\linewidth]{figures/llvmst.pdf}
+        \caption{LLVM编译框架}\label{fig:llvm}
+    \end{figure}
     \item \textbf{SML-New Jersey基于LLVM编译器后端的版本：} 
-    SML-New Jersey编译器（SML/NJ）是Standard ML的著名编译器。在最近发布的新版本中，它更改了后端，
-    将CPS中间语言编译到了LLVM IR~\cite{farvardin2020new}。CPS程序首先被转换为控制流图（Control-Flow Graph, CFG）中间语言，
-    然后再转换为LLVM IR。这是因为将CPS中间语言连接到基于SSA的编译器基础设施能够利用这些编译器提供的丰富后端优化。
-    但这项工作不是经过形式化验证的。
-    我们的工作受到了这一趋势的启发，并进一步尝试对这种连接进行形式化验证。
+    SML-New Jersey（SML/NJ）是一种经典的函数式编程语言。为了支持涌现出的各种不同的机器架构，
+    SML/NJ的维护者们开发了MLRisc来作为抽象的机器层~\cite{george1994portable}。
+    然而，在SML/NJ新发布的版本中，它更改了后端，将CPS中间语言编译到了LLVM IR~\cite{farvardin2020new}。
+    这样的变更主要出于两种需求：为了利用LLVM编译器后端提供的丰富的分析与优化工具，以及为了支持更多的操作系统和机器架构。
+    在新的SML/NJ编译器中，后端先读入高阶的CPS中间语言程序，将其转换为一阶程序，
+    然后转换为控制流图（Control-Flow Graph, CFG）中间语言，再进一步转换为LLVM IR。
+    使用LLVM框架之后的SML/NJ编译器生成的代码在性能上有所提升。
+    但是，这项工作不是经过形式化验证的，无法保证高可靠性。
+    我们的工作受到了这一趋势的启发，并进一步尝试对这种从CPS到SSA的连接进行形式化验证。
     \item \textbf{经验证的LLVM IR: Vellvm：} 
     Vellvm在定理证明工具Coq中定义了LLVM中间语言的抽象语法树（Abstract Syntax Tree, AST），并为LLVM IR提供了形式化语义。
+    Vellvm还为其提供了类型系统及SSA结构相关性质的证明。
+    研究者们还在Coq中实现了能够执行LLVM程序的解释器（Interpreter），来验证Vellvm的语义设计。
+    利用Vellvm，我们可以将LLVM IR程序和它的Coq代码表示进行相互转换，还可以对针对LLVM IR的转换过程进行验证
+    并直接插入到LLVM编译框架中。
     早期版本的Vellvm提供了LLVM IR的操作语义~\cite{zhao2012formalizing}，
     而在较新版本中已迁移到了基于交互树（Interactive Tree, ITree）的语义~\cite{zakowski2021modular}。
     在本文第\ref{sec:overview}节所介绍的编译链中，SSA程序首先被编译到了Vellvm AST，然后生成了最终的LLVM IR程序。
