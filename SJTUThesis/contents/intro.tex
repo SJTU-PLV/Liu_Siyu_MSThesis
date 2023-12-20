@@ -15,8 +15,7 @@
 
 对于庞大的编译器，通过测试找到它的错误其实是比较困难的。
 编译器随机测试工具Csmith~\cite{csmith2011}已经发现了四百多个编译器错误，可见编译器中隐藏的风险数量之大。
-
-编译器的形式化验证已被证实可以有效保证编译器的正确性，它从数学层面上确保了编译过程的正确性。
+编译器的形式化验证（Formal Verification）已被证实可以有效保证编译器的正确性，它从数学层面上确保了编译过程的正确性。
 一个著名的例子是经过验证的C编译器CompCert~\cite{leroy2009formally}，
 它将C语言的一个有代表性的重要子集编译到了支持多种处理器架构的汇编代码（包括PowerPC、ARM、X86和RISC-V）。
 其编译过程的正确性（即目标汇编程序保存了源C程序的语义）经过了形式化验证，并在Coq定理证明器中实现。
@@ -48,9 +47,10 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 新版本已经将其后端转向了LLVM~\cite{farvardin2020new}。
 
 在本文中，我们研究了如何构建基于SSA中间语言的经验证的函数式语言编译器。
-具体而言，我们设计并验证了从CPS到SSA的转换算法，以便在经验证的编译器领域中将
-传统基于CPS的函数式编译器与基于SSA中间语言上工作的主流编译器后端连接起来。
-尽管研究人员已经探讨了CPS和SSA程序结构之间的对应关系~\cite{appel1998ssa,ssabook}，
+具体而言，我们设计了从CPS到SSA的转换算法，并使用模拟技术对该转换过程的正确性进行形式化验证。
+在经验证的编译器领域中将传统基于CPS的函数式编译器与基于SSA中间语言的主流编译器后端连接起来，
+才能让高可靠函数式编译器复用基于SSA语言的编译器后端优化。
+尽管研究人员已经探讨了CPS和SSA程序结构上的对应关系~\cite{appel1998ssa,ssabook}
 和相互转换~\cite{farvardin2020new,kelsey1995correspondence}，
 但如何对转换算法进行形式化验证仍然是待解决的问题。
 
@@ -76,10 +76,11 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
     
 \end{itemize}
 
-在本章接下来的内容中，我们首先在\ref{sec:background}节介绍必要的相关背景知识，
-包括函数式语言中的直接风格与延续传递风格、静态单赋值及其与延续传递风格的关系。
-我们还介绍了程序语言的操作语义以及基于模拟技术的编译器形式化验证框架。
+在本章接下来的内容中，我们首先在\ref{sec:background}节介绍了与此研究相关的背景知识，
+包括函数式语言中的直接风格与延续传递风格表示形式、静态单赋值中间语言及其与延续传递风格的关系。
+我们还简要介绍了程序语言的操作语义以及基于模拟技术的编译器形式化验证理论与框架。
 在第\ref{sec:overview}节中，我们简要介绍了本文中构建的部分经验证的PCF编译器原型的各个组成部分。
+
 在第\ref{ch:related}章中，我们讨论了领域内与本课题相关的工作，
 包括一些经验证的函数式编译器和与静态单赋值中间语言有关的工作。
 我们在第\ref{ch:trans}章中具体探讨了该编译过程的源语言与目标语言，并为它们提供了
@@ -88,7 +89,7 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 在第\ref{ch:verify}章中，我们使用基于模拟的方法对该编译过程进行形式化验证。
 我们首先对验证框架及步骤进行简要介绍，然后具体讨论了每一个编译步骤的前向模拟证明。
 本文工作在Coq中的实现和评估将在第\ref{ch:implement}章中介绍。
-最后,我们在第\ref{ch:summary}章中对本文内容进行总结。
+最后,我们在第\ref{ch:summary}章中对本文内容进行总结，并展望了基于该研究未来可继续开展的工作。
 
 \section{相关背景} \label{sec:background}
 
@@ -119,15 +120,15 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 
 \subsection{延续传递风格} \label{sec:bg_cps}
 
-函数式程序的形式有很多种，如直接风格（Direct Style）和延续传递风格（CPS）。
+函数式程序的表示形式有很多种，比如直接风格（Direct Style）和延续传递风格（CPS）。
 图~\ref{cpsdirect}展示了同样含义的函数式程序在这两种不同表示风格下的例子。
-CPS的关键特性在于通过延续明确地表示程序的控制流。
-CPS中的延续（Continuation）指的是当前执行节点后所有剩余计算的函数，
-该函数需要把当前计算得到的结果作为其输入。
+CPS程序的关键特性在于通过延续（Continuation）明确地表示程序的控制流。
+CPS中的延续指的是当前执行节点之后剩余需要计算的函数，
+该函数把当前代码项计算得到的结果作为其输入。
 具体来说，CPS函数需要将延续作为额外的参数传入，
-当运行该函数得到计算结果后，程序通过调用该延续来传递这个值，也就是``返回''该结果。
+当运行该函数得到计算结果后，程序就会通过调用该延续来传递这个值，也就是``返回''该结果。
 以图~\ref{fig:cps2}为例，函数$h$在CPS中的延续参数为$k$，在得到最终结果$z$之后，
-程序调用$(k\; z)$以返回$z$，并执行$k$所代表的剩余计算。
+程序调用$(k\; z)$以返回$z$，并把$z$嵌入$k$所代表的剩余需计算的代码项。
 当调用CPS函数时，调用者需要提供一个延续函数来表示剩余计算，且在CPS中所有中间结果、控制流中的控制点都需要被明确命名。
 这些特点导致用户直接用CPS形式编写代码较为困难，但是由于明确表示的控制流利于程序分析和优化，
 CPS是函数式语言编译器中常见的中间表示形式。
@@ -135,7 +136,7 @@ CPS是函数式语言编译器中常见的中间表示形式。
 \begin{figure}
     % \vspace{-0.3cm}
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \flushright
     % \small
      \begin{equation}
@@ -145,18 +146,20 @@ CPS是函数式语言编译器中常见的中间表示形式。
         & \quad (x*x)\; +\; (y*y) \\
         \end{aligned}
     \end{equation}
-    \caption{Direct Style}
+    \caption{直接风格}
         \label{fig:ori2}
     \end{subfigure}
  %   \hfill
-    \begin{subfigure}[b]{0.6\textwidth}
+    \begin{subfigure}[b]{0.5\textwidth}
         \flushleft
         % \small
         \begin{equation}
             \nonumber
             \begin{aligned}
-            & \mathbf{function}\; h(x,y,k)= \mathbf{let}\; x_1=x*x\; \mathbf{in} \\
-            &  \quad   \mathbf{let}\; y_1=y*y\; \mathbf{in}\; (\mathbf{let}\; z=x_1+y_1\; \mathbf{in}\; (k\; z)) \\
+            & \mathbf{function}\; h(x,y,k)= \\
+            & \quad \mathbf{let}\; x_1=x*x\; \mathbf{in} \\
+            & \quad\quad \mathbf{let}\; y_1=y*y\; \mathbf{in} \\
+            & \quad\quad\quad \mathbf{let}\; z=x_1+y_1\; \mathbf{in}\; (k\; z) \\
             \end{aligned}
         \end{equation}
         \caption{CPS}
@@ -167,11 +170,16 @@ CPS是函数式语言编译器中常见的中间表示形式。
 
 CPS形式函数式程序的使用可以追溯到Scheme的编译器中~\cite{steele1978rabbit}。
 之后，它被应用到了SML-New Jersey编译器的基本框架中~\cite{shao1995type}。
-Plotkin~\cite{plotkin1977lcf}、Danvy和Nielsen\cite{danvy2007one}等人研究了将直接风格的函数式程序转换为CPS程序的方法。
-其中Plotkin的方法需要后续进行管理性缩减（Administrative Reduction），以去除冗余的$\lambda$结构。
+为了利用CPS形式中间语言的优势，研究者们设计了多种将直接风格的函数式程序进行CPS转换的方法。
+其中Plotkin的方法需要后续进行管理性缩减（Administrative Reduction），以去除冗余的$\lambda$结构~\cite{plotkin1977lcf}。
 Felleisen等人提出了另一种方法非组合式的方法，其基于$\lambda$-演算的语义。
-Danvy和Nielsen将这两种方法联系起来，可以只通过一步转换完成，不需要在后续过程中进行管理性缩减。
-
+Danvy和Nielsen将这两种方法联系起来，可以只通过一步转换完成，不需要在后续过程中进行管理性缩减\cite{danvy2007one}。
+Andrew根据对之前的研究者们关于CPS的工作的观察和总结，提出了特定的CPS语言规范~\cite{kennedy2007compiling}。
+它适用于无类型的或有类型的函数式语言，并且可以表示循环、异常等。
+这种CPS语言对函数和局部延续做了语法上的区分，后者总是可以被编译为跳转。
+Andrew基于Standard ML语言的一部分演示了如何对函数式程序进行CPS转换。
+他使用了Danvy和Nielsen的一步（One-Pass）CPS转换算法思想，把上下文作为参数，
+让转换算法知道当前代码项被翻译之后会嵌入到哪里。
 
 \subsection{静态单赋值} \label{sec:bg_ssa}
 
@@ -204,7 +212,8 @@ Appel等人~\cite{appel1998ssa}发现SSA也是一种函数式语言：$\lambda$�
 但它们所做的工作其实是相同的。
 L. Beringer~\cite{ssabook}给出了SSA的函数式表示，
 将SSA中的相关术语与函数式编程中的概念联系起来。
-例如，函数式语言中的$let$绑定对应着SSA中的赋值、绑定变量的词法作用域对应着SSA中的可支配区域。
+例如，函数式语言中的$let$绑定对应着SSA中的赋值、绑定变量（Bound Variable）的词法作用域
+（Lexical Scope）对应着SSA中的可支配区域（Dominance Region）。
 $let$绑定与变量定义点之间的对应关系还延续到了程序结构的其他方面。
 与命令式语言中的返回地址或函数指针相似，延续指定了当前代码片段求值完成后程序下一步该如何执行。
 SSA中的控制流图对应着函数式编程中的函数，虽然顶层延续的参数在控制流图中并不是明确可见的，
@@ -212,6 +221,10 @@ SSA中的控制流图对应着函数式编程中的函数，虽然顶层延续�
 
 事实上，SSA和CPS都是通过强制执行特定的命名规则，在语法层面上明确表示出程序结构的某个方面。
 这样，编译器就可以更加方便地对程序进行分析和处理。
+在CPS形式的函数式程序中，延续的形参恰好起到了$\phi$函数的作用：统一来自各个调用点的变量名称，
+这个名称将在之后的代码中被使用。并且，CPS程序中绑定的变量名的范围和SSA程序中变量的可支配区域
+都在函数调用或跳转到控制流合并点时终止。从这一事实来看，CPS程序其实已经有了SSA程序基本结构。
+
 Kelsey~\cite{kelsey1995correspondence}通过将CPS中的$\lambda$进行标注来区分完整过程、跳转、延续，
 进而将被这种标注的CPS程序转换为一种SSA程序。然而，Kelsey工作中的CPS和SSA语言与本文中所使用的差距较大。
 Kelsey的CPS语言将二元表达式的参数和条件语句中的条件视为表达式，使其更类似于带有延续元素的标准函数式程序。
@@ -442,4 +455,9 @@ CPS转换及CPS到SSA转换的正确性通过源程序和目标程序之间的�
 SSA程序被转换为Vellvm中的抽象语法树，然后转换为LLVM IR程序文本。
 在该编译链中，我们使用了经过验证的LLVM基础设施Vellvm~\cite{zakowski2021modular}）。
 利用其在Coq实现的LLVM IR的抽象语法树，我们可以进一步输出最终的LLVM IR程序。
-由于我们使用的SSA语言是LLVM IR的简化版本，
+由于我们使用的SSA语言是LLVM IR的简化版本，它保留了LLVM IR程序的基本结构，
+可以方便地编译到Vellvm中的抽象语法树。这种SSA语言省略了LLVM IR中的大部分参数。
+例如，函数定义在LLVM中非常复杂，有很多可选的参数，而本文中的SSA语言只保留了函数定义中必须指定的内容。
+LLVM中的表达式类型多种多样，其中整数包括多种宽度的i16、i32等，
+而本文的SSA语言简化为没有明确指定类型的无限宽自然数。
+该编译过程的主要工作其实就是为这些被省略的参数选取正确的默认值。
