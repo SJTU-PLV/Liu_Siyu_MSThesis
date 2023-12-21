@@ -453,7 +453,7 @@ CPS转换及CPS到SSA转换的正确性通过源程序和目标程序之间的�
 \subsection{从SSA到LLVM IR}
 
 SSA程序被转换为Vellvm中的抽象语法树，然后转换为LLVM IR程序文本。
-在该编译链中，我们使用了经过验证的LLVM基础设施Vellvm~\cite{zakowski2021modular}）。
+在该编译链中，我们使用了经过验证的LLVM基础设施Vellvm~\cite{zakowski2021modular}。
 利用其在Coq实现的LLVM IR的抽象语法树，我们可以进一步输出最终的LLVM IR程序。
 由于我们使用的SSA语言是LLVM IR的简化版本，它保留了LLVM IR程序的基本结构，
 可以方便地编译到Vellvm中的抽象语法树。这种SSA语言省略了LLVM IR中的大部分参数。

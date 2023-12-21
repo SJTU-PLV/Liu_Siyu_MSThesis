@@ -2,13 +2,48 @@
 
 \chapter{实现与评估} \label{ch:implement}
 
-\section{编译链及定理证明的Coq实现}
+\section{编译链及定理证明的实现}
 
-编译框架及相关定理的形式化证明使用交互式定理证明器Coq实现。Coq主要是用Ocaml实现的，
-支持数学断言的表示，并找到形式化的证明。其中，PCF语法分析器部分在OCaml中实现，
-相关代码位于Parser目录下，在顶端Coq模块中添加需要进行编译的PCF程序在Coq中的定义。
-Ocamllex和Ocamlyacc~\cite{smith2007ocamllex}是OCaml中词法和语法解析器的生成器，使用它们可以便捷地得到对PCF程序文本进行解析的OCaml代码。
-将Coq中的PCF程序添加到顶层模块后，就可以运行顶层编译模块top.v，将源程序编译到SSA程序。
+如第~\ref{sec:overview}节中所述，我们主要使用了交互式定理证明器Coq实现
+程序语言定义及编译算法，并完成相关定理的形式化证明。
+Coq主要是用OCaml语言实现的，它支持数学断言的表示，并且能够检查这些断言的证明，
+从其形式化的构造证明中提取出验证程序~\cite{paulin2011introduction}。
+作为一种编程语言，Coq是一种依赖类型的函数式编程语言；作为一种逻辑系统，它实现了一种高阶类型理论。
+其中，编译链的PCF语法分析器（Parser）部分在OCaml中实现，它分析PCF程序文本并
+在顶层Coq模块中添加需要进行编译的PCF源程序。之后的编译过程及验证在Coq中实现，
+并链接到Coq中的Vellvm抽象语法树。
+
+\subsection{PCF语法分析器}
+我们没有直接去编写实现词法解析和语法解析功能的OCaml代码，而是
+使用ocamllex和ocamlyacc~\cite{smith2007ocamllex}作为词法和语法解析器的生成器。
+该PCF语法分析器的结构如图~\ref{fig:parser}所示。
+
+Ocamllex可以从附加了语义行为的正则表达式（Regular Expression）集合中生成词法分析器。
+我们首先在\textit{lexer.mll}中定义了直接风格PCF语言的词法解析规则，
+包括输入文本中各种词法单元的模式匹配和对应的操作，然后使用ocamllex
+生成词法分析器的OCaml代码\textit{lexer.ml}。
+在\textit{lexer.ml}文件中，词法分析函数将词法分析缓冲区（Lexer Buffer）作为参数，
+生成标记流（Tokens）。
+词法分析缓冲区是在OCaml标准库模块Lexing中实现的抽象数据类型，它维护分析函数当前的状态，
+并可以从输入获取内容对缓冲区进行填充~\cite{leroy2021ocaml}。
+分析函数会将缓冲区中的字符与词法规则中定义的正则表达式进行匹配，直到输入的前缀符合某条规则，
+执行相应的操作。如果符合多条规则，就按照最长匹配原则。
+Ocamlyacc会根据语法规则\textit{grammar.mly}生成语法分析器的接口\textit{grammar.mli}
+和实现\textit{grammar.ml}。语法解析函数的参数包括上文中提到的词法分析器和词法分析缓冲区。
+它将词法分析得到的标记流解析为抽象语法树。之后，我们使用\textit{printer.ml}读入PCF程序
+在OCaml中的抽象语法树打印出它的Coq程序并将其写入Coq编译链的顶层模块，这样就可以直接在Coq中使用它了。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/pcfparser.pdf}
+    \caption{PCF语法分析器结构}\label{fig:parser}
+\end{figure}
+
+\subsection{编译算法实现}
+
+我们在Coq中完成了PCF、CPS和SSA程序语言的定义以及从PCF源程序到Vellvm抽象语法树的编译链。
+如上一节所述，我们已经使用PCF语法分析器在Coq顶层编译模块得到了PCF程序的抽象语法树。
+除了
 
 PCF程序到SSA程序的两步转换算法及正确性验证均在Coq中实现，位于文件夹FrontEnd目录下。
 由SSA程序生成LLVM IR代码的过程也在Coq中进行实现，因为经验证的LLVM，即Vellvm也是在Coq中实现。
@@ -20,6 +55,8 @@ PCF程序到SSA程序的两步转换算法及正确性验证均在Coq中实现�
 从而能够执行相应的程序，得到程序返回的结果。其中，发散的定义要取决于对最大步数的限定，即解释器的fuel。
 解释器每走一步都会消耗一个fuel，如果fuel消耗完程序还没有终止或出错，就可以认为程序发散了，返回超时状态（Timeout）。
 进行解释器测试主要是为了找出操作语义和转换算法中的问题，为接下来的证明减少阻碍。形式化验证过程本身与解释器没有关系。
+
+\subsection{定理证明的实现}
 
 \section{各部分Coq代码评估}
 
