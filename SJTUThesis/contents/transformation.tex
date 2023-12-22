@@ -119,6 +119,7 @@ $\mathbf{let}$表达式在$t_2$中用代码项$t_1$的值替换变量$x$。
 \begin{figure}[t]
     \centering
     \begin{subfigure}[t]{0.43\textwidth}
+        \setlength{\jot}{10pt}
         \begin{gather*}
             \displaystyle{\frac{t_{pcf}=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
             \displaystyle{\frac{t_1\; is\; a\; value\quad t_3=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2 [t_1/x],\; ctx)}} \\
@@ -129,6 +130,7 @@ $\mathbf{let}$表达式在$t_2$中用代码项$t_1$的值替换变量$x$。
         \end{gather*}
     \end{subfigure}
     \begin{subfigure}[t]{0.55\textwidth}
+        \setlength{\jot}{10pt}
         \begin{gather*}
             \displaystyle{\frac{t_{pcf}=((\mathbf{fix}\; f\; x\; t_1)\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (\mathbf{fix}\; f\; x\; t_1)\; ctx)}} \\
             \displaystyle{\frac{t_2\; is\; a\; value\quad t_3=(\mathbf{fix}\; f\; x\; t_1)} {(t_2,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_1 [t_2/x,t_3/f],\; ctx)}} \\
@@ -158,6 +160,7 @@ $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[t]{0.43\textwidth}
+        \setlength{\jot}{10pt}
         \begin{gather*}
             \displaystyle{\frac{t_{cps}=(\mathbf{letval}\; x=v\; \mathbf{in}\; t)} {(t_{cps},\; loc_{cps})\rightarrow (t [v/x],\; loc_{cps})}} \\
             \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; 0\; t_1\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_1,\; loc_{cps})}} \\
@@ -166,6 +169,7 @@ $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun
         \end{gather*}
     \end{subfigure}
     \begin{subfigure}[t]{0.55\textwidth}
+        \setlength{\jot}{10pt}
         \begin{gather*}
             \displaystyle{\frac{t_{cps}=(\mathbf{letop}\; x=op\; v_1\; v_2\; \mathbf{in}\; t)}
             {(t_{cps},\; loc_{cps})\rightarrow (t [(\mathbf{eval}_{op}\; op\; v_1\; v_2)/x],\; loc_{cps})}} \\
@@ -201,6 +205,7 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
 \begin{figure}[t]
     \centering
     % \small
+    % \setlength{\jot}{10pt}
     \begin{algorithm}[H]
         \caption{CPS转换}
         \SetAlgoLined
@@ -292,6 +297,7 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
     % \vspace*{-0.3cm}
     \centering
     % \small
+    \setlength{\jot}{10pt}
     \begin{gather*}
         \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (y=\mathbf{call}\; f\; v_0)\quad \mathbf{arg}\; f = x}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((f,b_1,0),\; pc,\; loc_{ssa}\; [x\mapsto v_0],\; \mathbf{push}\; s_{ssa}\; pc )}} \\
@@ -328,6 +334,7 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 
 \begin{figure}[!ht]
     \centering
+    % \setlength{\jot}{10pt}
     \begin{algorithm}[H]
         \caption{CPS$\rightarrow $SSA 转换}
         \SetAlgoLined
@@ -373,22 +380,28 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 \end{figure}
 
 我们设计了将CPS形式的PCF程序转换为SSA程序的转换算法。本质上，该转换过程是一个递归函数，
-它接受一个CPS源程序和一个空的SSA程序，不断将新的组件（例如基本代码块、指令等）放入当前的SSA程序，
-并在递归翻译CPS项时更新参数。一旦整个CPS程序的翻译完成，所得到的SSA程序就是我们需要的目标程序。
+它接受一个CPS代码项、一个SSA程序及其他信息作为其参数，不断将新的组件（例如基本代码块、指令等）
+放入当前SSA程序的特定位置，并在递归地翻译CPS代码项时更新其他参数。
+这些参数是确定新的组件具体内容及插入位置所必须的信息。
+一旦整个CPS程序的翻译完成，所得到的SSA程序就是我们需要的转换后的目标SSA程序。
 
-在转换算法~\ref{cps2ssa}中，函数$\mathcal{G}_{proc}$将CPS代码项转换为具有一个主函数的SSA顶层翻译单元$t_{ssa}$。
-它使用了函数$\mathcal{G}$，该函数将$(t_{cps}, t_{ssa}, pc, n, loc)$作为输入，
-并输出$(t'_{ssa}, n', loc')$。其中，$t_{cps}$是待转换的CPS程序，$t_{ssa}$是已生成的SSA程序。
-$pc$表示我们插入新的SSA代码片段时，当前程序计数器指向的位置。为了在SSA的条件语句分支中生成新的基本块标签，
-我们使用参数$n$跟踪CPS程序中遇到的$\mathbf{ifz}$代码项的数量。
-$loc$指的是从延续变量到定义它们的CPS项的映射。我们可以使用它来确定$k$是局部延续
+在转换算法~\ref{cps2ssa}中，函数$\mathcal{G}_{proc}$将输入的CPS代码项转换为SSA顶层翻译单元$t_{ssa}$。
+$t_{ssa}$具有一个主函数，主函数的返回值就是程序的结果。
+具体来说，它使用了函数$\mathcal{G}$对源程序进行处理。该函数将$(t_{cps}, t_{ssa}, pc, n, loc)$作为输入，
+并输出$(t'_{ssa}, n', loc')$。其中，$t_{cps}$是待转换的CPS程序，$t_{ssa}$是已经生成的SSA程序。
+$pc$表示我们插入新的SSA代码片段时，当前程序计数器指向的位置。为了在SSA的条件语句分支中生成新的基本代码块标签，
+我们使用参数$n$跟踪CPS程序中已经遇到的$\mathbf{ifz}$代码项的数量。
+$loc$指的是从延续变量名到定义它们的CPS代码项的映射。我们可以使用它来确定$k$是局部延续
 （即由$\mathbf{letcont}$语句引入的延续变量）还是返回延续（即函数的延续变量）。
 请注意，我们在$loc_{cps}$中存储整个$\mathbf{letcont}$或$\mathbf{letfun}$语句来表示局部或返回延续，
 尽管我们不需要它们的延续体。这是为了避免引入用于区分局部和返回延续的中间项。
 
 该函数返回更新后的SSA程序$t'_{ssa}$，新的$\mathbf{ifz}$代码项数量$n'$和更新后的映射$loc'$。
-在初始状态中，$t_{ssa}$是一个空的主函数，$pc$指向主函数的开头，$n$为0，$loc$为空。
-算法~\ref{cps2ssa}中的$\mathbf{app}$操作表示将新的组件添加到SSA程序的$pc$位置。
+在初始状态中，$t_{ssa}$是一个只含有空白主函数的SSA程序，程序计数器$pc$指向主函数的开头，
+已处理的条件语句数量$n$为0，映射$loc$为空。
+在算法~\ref{cps2ssa}中，$\mathbf{app}$操作表示将新的组件添加到SSA程序的$pc$位置。
+其中，$\mathbf{app}_i$表示插入指令，$\mathbf{app}_b$表示插入基本代码块，
+$\mathbf{app}_p$表示插入函数。
 例如，规则（1）中的$(\mathbf{app}_i\; t_{ssa}\; pc\; [x=v;])$表示在$t_{ssa}$的位置$pc$
 处插入指令$[x=v;]$。
 

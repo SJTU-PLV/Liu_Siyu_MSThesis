@@ -60,6 +60,7 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 
 \begin{figure}[htbp]
     \centering
+    \setlength{\jot}{10pt}
     \begin{gather*}
     \tag{1} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2)\; c t x \quad
@@ -185,6 +186,7 @@ SSA程序中赋值、终止指令之间的匹配关系。规则(2)和(4)说明�
 \begin{figure}[htbp]
     \centering
     % \small
+    \setlength{\jot}{10pt}
     \begin{gather*}
         \tag{1} \displaystyle{\frac{\begin{matrix}
             loc_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k\; x_1=t\; \mathbf{in}\; u}\\
@@ -301,23 +303,29 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
 
 为了理解在前向模拟证明中程序内部执行步骤的模拟是如何工作的，我们以图~\ref{factcps}和图~\ref{factssa}中计算阶乘的CPS和SSA程序为例。
 一开始，它们的初始状态通过$\sim$相关联。根据它们的小步操作语义，下一个程序状态是：
+
 \begin{itemize}
     \item $S_{cps1}:\; (\mathbf{letval}\; x_5=2\; \mathbf{in}\dots,\, loc_{empty}\; [k\mapsto fact_{cps}])$
     \item $S_{ssa1}:\; (fact_{ssa},\, (main, b_1, 0),\, (main, empty, 0),\, loc_{empty}\; [x_5\mapsto 2],\, s_{empty})$
 \end{itemize}
+
 为了证明$S_{cps1}\sim S_{ssa1}$成立，我们提取$(main, b_1, 0)$位置处的指令$[x_5 = 2;]$。
 $S_{cps1}$和$S_{ssa1}$中更新后的映射分别被命名为$loc_{cps1}$和$loc_{ssa1}$。
 经过一步转换之后，CPS和SSA程序的状态变为：
+
 \begin{itemize}
     \item $S_{cps2}:\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\dots, loc_{cps1})$
     \item $S_{ssa2}:\; (fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\, s_{empty})$
 \end{itemize}
+
 根据图~\ref{fig:simrelation}中的规则(2)，我们需要把子代码项$(k_{init}\; y)$和$(fact\; k_2\; x_5)$
 分别与相应的SSA代码片段使用$\sim$关系匹配起来。
+
 \begin{itemize}
     \item $(k_{init}\; y,\, loc_{cps1}\; [k_2\mapsto t_{cps2}])\sim $ \\ $(fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\; s_{empty})$
     \item $ (fact\; k_2\; x_5,\, loc_{cps1}\; [k_2\mapsto t_{cps2}])\sim $ \\ $(fact_{ssa},\, (main, k_2, 0),\, (main, b_1,1),\, loc_{ssa1},\, s_{empty})$
 \end{itemize}
+
 第一条匹配关系可以由规则(3)建立，而第二条匹配关系则可以由规则(5)建立。
 
 如以上证明过程所示，我们可以一步步将CPS程序和SSA程序进行转换，并始终能找到它们符合$\sim$
