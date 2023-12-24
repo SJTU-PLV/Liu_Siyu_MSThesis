@@ -352,12 +352,15 @@ SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n
     \end{tabbing}
   \end{theorem}
 
-\section{组合与后向模拟}
+\section{组合与后向模拟} \label{sec:combback}
 
 将以上两节中得到的前向模拟性质相关定理进行组合，就可以得到整个编译过程的前向模拟。
 组合定理~\ref{trm:cpsbhvpt}和定理~\ref{trm:ssabhvpt}，即可证明定理~\ref{trm:topt}。
 组合定理~\ref{trm:cpsbhvpd}和定理~\ref{trm:ssabhvpd}，即可证明定理~\ref{trm:topd}。
-我们还证明了目标SSA语言的确定性，即定理~\ref{trm:ssadeter}。
+定理~\ref{trm:topt}表示，如果PCF程序终止并返回$n$，则转换后得到的SSA程序也终止并返回$n$。
+定理~\ref{trm:topt}表示，如果PCF程序发散，则转换后得到的SSA程序也发散。
+为了证明后向模拟，我们还证明了目标SSA语言的确定性，即定理~\ref{trm:ssadeter}。
+它表示对于任意一个会终止的SSA程序，其返回值是唯一确定的。
 
   \begin{theorem}[SSA程序对PCF程序终止行为的保存]\label{trm:topt} 
     \begin{tabbing}
@@ -379,22 +382,30 @@ SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n
     \begin{tabbing}
      \\
     \quad\=$\forall \; t_{ssa}\; n_1\; n_2,\; $\=\kill
-    \>$t_{ssa}\Downarrow n_1,\; t_{ssa}\Downarrow n_2 \Longrightarrow n_1 = n_2.$
+    \>$\forall \; t_{ssa}\; n_1\; n_2,\; t_{ssa}\Downarrow n_1,\; t_{ssa}\Downarrow n_2 \Longrightarrow n_1 = n_2.$
     \end{tabbing}
   \end{theorem}
 
 根据PCF到SSA编译过程的前向模拟及SSA目标语言的确定性，可以证明后向模拟，即定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}。
+其中，定理~\ref{trm:bterm}表示对终止行为及其返回值的保存，定理~\ref{trm:bdiv}表示对发散行为的保存。
 
-对于定理~\ref{trm:bterm}，首先假设PCF源程序不能终止，由定理~\ref{trm:topd}可知编译得到的SSA目标程序也不能终止。
-但是，在定理~\ref{trm:bterm}的条件中，$t_{ssa}\Downarrow n$，SSA目标程序是终止的。
-这与假设产生了矛盾，说明原假设错误，PCF源程序能够终止。
-先将PCF源程序返回的结果值记为$m$，由定理~\ref{trm:topt}可知SSA目标程序返回的结果也是$m$。
-由于SSA语言具有确定性，对于一个SSA程序，它的返回值是固定的。
-所以，$m=n$，PCF源程序返回的结果值也是$n$，定理~\ref{trm:bterm}得证。
-
-对于定理~\ref{trm:bdiv}，假设源程序能够终止，
-就存在某个值$n$是该PCF程序的返回值。由定理~\ref{trm:topt}可知，编译后得到的SSA目标程序也会终止并返回$n$。
-这与定理~\ref{trm:bdiv}条件中的$t_{ssa}\Uparrow$相矛盾，说明原假设错误，PCF程序是发散的，定理~\ref{trm:bdiv}得证。
+\begin{itemize}
+  \item \textbf{终止行为反向模拟：}对于定理~\ref{trm:bterm}，首先假设PCF源程序不能终止。
+    对于正确的PCF程序和SSA程序，它们只有两种可能的行为：要么终止，要么发散。
+    那么，结合定理~\ref{trm:topd}，我们可以证明：对于任意的安全的PCF程序，如果它不终止，那么
+    由它编译得到的SSA目标程序也不能终止。
+    但是，在定理~\ref{trm:bterm}的条件中，$t_{ssa}\Downarrow n$，说明SSA目标程序是终止的。
+    这与假设产生了矛盾，说明原假设错误，PCF源程序能够终止。
+    由定理~\ref{trm:topt}可知，如果我们将PCF源程序返回的结果值记为$m$，那么SSA目标程序返回的结果值也是$m$。
+    由于SSA语言具有确定性，对于一个SSA程序，它的返回值是固定的。
+    所以，$m=n$，即PCF源程序返回的结果值也是$n$。定理~\ref{trm:bterm}得证。
+  \item \textbf{发散行为反向模拟：}对于定理~\ref{trm:bdiv}，首先假设源程序能够终止。
+    那么一定存在某个值$n$，它是该PCF程序的返回值。由定理~\ref{trm:topt}可知，由该PCF源程序
+    编译后得到的SSA目标程序也会终止并返回$n$。这与定理~\ref{trm:bdiv}条件中的$t_{ssa}\Uparrow$相矛盾，
+    说明原假设错误，PCF程序不能够终止。由于正确的PCF程序要么终止，要么发散，说明PCF程序是发散的。
+    定理~\ref{trm:bdiv}得证。
+\end{itemize}
 
 证明了完整编译过程对安全程序的反向模拟，就能够说明该转换算法具有语义保存性质，
-转换得到的SSA程序保存了PCF源程序的语义。
+即转换得到的SSA程序保存了PCF源程序的语义。这样，我们就得到了一条由PCF程序到SSA程序的
+经验证的编译链。

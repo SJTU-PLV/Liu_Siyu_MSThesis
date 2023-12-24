@@ -423,14 +423,22 @@ doi="10.1007/978-3-662-46663-6_12"
 }
 
 @article{odersky2014unifying,
-  title={Unifying functional and object-oriented programming with scala},
-  author={Odersky, Martin and Rompf, Tiark},
-  journal={Communications of the ACM},
-  volume={57},
-  number={4},
-  pages={76--86},
-  year={2014},
-  publisher={ACM New York, NY, USA}
+author = {Odersky, Martin and Rompf, Tiark},
+title = {Unifying Functional and Object-Oriented Programming with Scala},
+year = {2014},
+issue_date = {April 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {57},
+number = {4},
+issn = {0001-0782},
+url = {https://doi.org/10.1145/2591013},
+doi = {10.1145/2591013},
+abstract = {Scala unifies traditionally disparate programming-language philosophies to develop new components and component systems.},
+journal = {Commun. ACM},
+month = {apr},
+pages = {76–86},
+numpages = {11}
 }
 
 @book{chlipala2022certified,
@@ -446,13 +454,15 @@ doi="10.1007/978-3-662-46663-6_12"
   booktitle={Proceedings of the 2007 GCC Developers’ Summit},
   pages={31--37},
   year={2007},
-  organization={Citeseer}
+  organization={Citeseer},
+  url = {https://www.researchgate.net/publication/250140710_Extending_GCC_with_modular_GIMPLE_optimizations}
 }
 
 @book{thai2003net,
   title={.NET framework essentials},
   author={Thai, Thuan L and Lam, Hoang},
   year={2003},
+  isbn = {0596003021},
   publisher={" O'Reilly Media, Inc."}
 }
 
@@ -511,14 +521,21 @@ series = {ICFP 2016}
 }
 
 @article{wang2019certifying,
-  title={Certifying graph-manipulating C programs via localizations within data structures},
-  author={Wang, Shengyi and Cao, Qinxiang and Mohan, Anshuman and Hobor, Aquinas},
-  journal={Proceedings of the ACM on Programming Languages},
-  volume={3},
-  number={OOPSLA},
-  pages={1--30},
-  year={2019},
-  publisher={ACM New York, NY, USA}
+author = {Wang, Shengyi and Cao, Qinxiang and Mohan, Anshuman and Hobor, Aquinas},
+title = {Certifying Graph-Manipulating C Programs via Localizations within Data Structures},
+year = {2019},
+issue_date = {October 2019},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {3},
+number = {OOPSLA},
+url = {https://doi.org/10.1145/3360597},
+doi = {10.1145/3360597},
+journal = {Proc. ACM Program. Lang.},
+month = {oct},
+articleno = {171},
+numpages = {30},
+keywords = {CompCert, VST, Separation logic, Coq, Graph-manipulating programs}
 }
 
 @book{pierce2002types,
@@ -562,10 +579,54 @@ series = {ICFP 2016}
   year={2010}
 }
 
-@article{chu2006map,
-  title={Map-reduce for machine learning on multicore},
-  author={Chu, Cheng-Tao and Kim, Sang and Lin, Yi-An and Yu, YuanYuan and Bradski, Gary and Olukotun, Kunle and Ng, Andrew},
-  journal={Advances in neural information processing systems},
-  volume={19},
-  year={2006}
+@inproceedings{chu2006map,
+author = {Chu, Cheng-Tao and Kim, Sang Kyun and Lin, Yi-An and Yu, YuanYuan and Bradski, Gary and Ng, Andrew Y. and Olukotun, Kunle},
+title = {Map-Reduce for Machine Learning on Multicore},
+year = {2006},
+publisher = {MIT Press},
+address = {Cambridge, MA, USA},
+abstract = {We are at the beginning of the multicore era. Computers will have increasingly many cores (processors), but there is still no good programming framework for these architectures, and thus no simple and unified way for machine learning to take advantage of the potential speed up. In this paper, we develop a broadly applicable parallel programming method, one that is easily applied to many different learning algorithms. Our work is in distinct contrast to the tradition in machine learning of designing (often ingenious) ways to speed up a single algorithm at a time. Specifically, we show that algorithms that fit the Statistical Query model [15] can be written in a certain "summation form," which allows them to be easily parallelized on multicore computers. We adapt Google's map-reduce [7] paradigm to demonstrate this parallel speed up technique on a variety of learning algorithms including locally weighted linear regression (LWLR), k-means, logistic regression (LR), naive Bayes (NB), SVM, ICA, PCA, gaussian discriminant analysis (GDA), EM, and backpropagation (NN). Our experimental results show basically linear speedup with an increasing number of processors.},
+booktitle = {Proceedings of the 19th International Conference on Neural Information Processing Systems},
+pages = {281–288},
+numpages = {8},
+location = {Canada},
+series = {NIPS'06}
+}
+
+@article{itree2019,
+author = {Xia, Li-yao and Zakowski, Yannick and He, Paul and Hur, Chung-Kil and Malecha, Gregory and Pierce, Benjamin C. and Zdancewic, Steve},
+title = {Interaction Trees: Representing Recursive and Impure Programs in Coq},
+year = {2019},
+issue_date = {January 2020},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {4},
+number = {POPL},
+url = {https://doi.org/10.1145/3371119},
+doi = {10.1145/3371119},
+abstract = {Interaction trees (ITrees) are a general-purpose data structure for representing the behaviors of recursive programs that interact with their environments. A coinductive variant of “free monads,” ITrees are built out of uninterpreted events and their continuations. They support compositional construction of interpreters from event handlers, which give meaning to events by defining their semantics as monadic actions. ITrees are expressive enough to represent impure and potentially nonterminating, mutually recursive computations, while admitting a rich equational theory of equivalence up to weak bisimulation. In contrast to other approaches such as relationally specified operational semantics, ITrees are executable via code extraction, making them suitable for debugging, testing, and implementing software artifacts that are amenable to formal verification. We have implemented ITrees and their associated theory as a Coq library, mechanizing classic domain- and category-theoretic results about program semantics, iteration, monadic structures, and equational reasoning. Although the internals of the library rely heavily on coinductive proofs, the interface hides these details so that clients can use and reason about ITrees without explicit use of Coq’s coinduction tactics. To showcase the utility of our theory, we prove the termination-sensitive correctness of a compiler from a simple imperative source language to an assembly-like target whose meanings are given in an ITree-based denotational semantics. Unlike previous results using operational techniques, our bisimulation proof follows straightforwardly by structural induction and elementary rewriting via an equational theory of combinators for control-flow graphs.},
+journal = {Proc. ACM Program. Lang.},
+month = {dec},
+articleno = {51},
+numpages = {32},
+keywords = {monads, compiler correctness, Coq, coinduction}
+}
+
+@article{itreevellvm2021,
+author = {Zakowski, Yannick and Beck, Calvin and Yoon, Irene and Zaichuk, Ilia and Zaliva, Vadim and Zdancewic, Steve},
+title = {Modular, Compositional, and Executable Formal Semantics for LLVM IR},
+year = {2021},
+issue_date = {August 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {5},
+number = {ICFP},
+url = {https://doi.org/10.1145/3473572},
+doi = {10.1145/3473572},
+abstract = {This paper presents a novel formal semantics, mechanized in Coq, for a large, sequential subset of the LLVM IR. In contrast to previous approaches, which use relationally-specified operational semantics, this new semantics is based on monadic interpretation of interaction trees, a structure that provides a more compositional approach to defining language semantics while retaining the ability to extract an executable interpreter. Our semantics handles many of the LLVM IR's non-trivial language features and is constructed modularly in terms of event handlers, including those that deal with nondeterminism in the specification. We show how this semantics admits compositional reasoning principles derived from the interaction trees equational theory of weak bisimulation, which we extend here to better deal with nondeterminism, and we use them to prove that the extracted reference interpreter faithfully refines the semantic model. We validate the correctness of the semantics by evaluating it on unit tests and LLVM IR programs generated by HELIX.},
+journal = {Proc. ACM Program. Lang.},
+month = {aug},
+articleno = {67},
+numpages = {30},
+keywords = {Coq, LLVM, Monads, Semantics, Verified Compilation}
 }
