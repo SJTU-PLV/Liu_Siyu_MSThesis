@@ -4,7 +4,7 @@
 
 \section{编译链验证框架概览} \label{sec:verifyoverview}
 
-在上一节中，我们介绍了直接风格PCF程序的CPS转换以及CPS到SSA的转换算法。
+在上一章中，我们介绍了直接风格PCF程序的CPS转换以及CPS到SSA的转换算法。
 本节中我们将讨论如何对以上转换算法的正确性进行形式化验证。
 给定一个PCF程序$t_{pcf}$，首先通过$\mathcal{F}_{proc}$将其转换为CPS程序，
 然后再使用$\mathcal{G}_{proc}$把CPS程序转换为SSA程序$t_{ssa}$。
@@ -12,9 +12,11 @@
 \begin{equation}
 Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 \end{equation}
-如第\ref{sec:compcertbackend}节中所介绍，转换算法的语义保存性质可由定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}表示，
+如第\ref{sec:compcertbackend}节中所介绍，转换算法的语义保存性质可由定理~\ref{trm:bterm}和定理~\ref{trm:bdiv}表示。
+这是对编译过程的后向模拟，即目标SSA程序的行为是可接受的PCF源程序行为。
 其中$t \Downarrow n$表示$t$会终止并返回$n$，$t \Uparrow$表示$t$会发散。
-如果转换后得到的SSA程序终止并返回$n$，则PCF程序也终止并返回$n$。另一方面，如果SSA程序发散，则PCF程序也发散。
+定理~\ref{trm:bterm}表示，如果转换后得到的SSA程序终止并返回$n$，则PCF程序也终止并返回$n$。
+另一方面，定理~\ref{trm:bdiv}表示，如果SSA程序发散，则PCF程序也发散。
 
 \begin{theorem}[程序终止行为的保存]\label{trm:bterm} 
     \begin{tabbing}

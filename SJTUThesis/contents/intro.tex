@@ -425,7 +425,7 @@ P_1 \Downarrow B \Longrightarrow \mathcal{T}(P_1) \Downarrow B.
 源程序和目标程序初始状态的对应关系，我们可以推导出安全程序的前向模拟。
 结合目标语言的确定性，即可推导出安全程序的后向模拟。
 
-由于语义保存性质具有可传递（Transitively Composable）的性质，
+由于语义保存性质具有可组合传递（Transitively Composable）的性质，
 我们可以先分别证明各个编译过程的语义保存性质，然后将证明得到的定理组合起来推导出整个编译过程的正确性。
 例如，如果编译过程$\mathcal{T}$被分解为两个转换阶段$\mathcal{T}_1$和$\mathcal{T}_2$，
 $\mathcal{T}$可以被视为它们的组合。对于一个安全的程序$P$，如果没有发生编译时错误（Compiler-Time Error），
