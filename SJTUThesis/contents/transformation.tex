@@ -228,6 +228,40 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
     \caption{CPS转换算法}\label{algo:cpstrans}
 \end{figure}
 
+接下来，我们将以图~\ref{factpcfcps}中的直接风格与CPS形式PCF程序为例，说明以上CPS转换算法是如何将
+图~\ref{factpcf}中的程序转换为图~\ref{factcps}中的程序。说明过程中我们会略去新变量名的生成方法
+和$l_v$参数的维护，因为它们始终遵循同样的方法，不需再逐步描述。以下说明中已生成变量名参数均记为$l_v$。
+
+\begin{enumerate}
+    \item 首先对CPS源程序应用图~\ref{algo:cpstrans}中的规则(3)，下一步需要处理的PCF程序变为
+        子代码项$\mathbf{fix}\; fact\; x\; \dots$，参数$\kappa $从初始状态时的$\lambda x. (k_{init}\; x)$变为
+        $\lambda x. \mathbf{\mathcal{F}}(2, l_v, \lambda z. $ \\ $(\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (x\; k_2\; z)))$。
+    \item 先对参数$\kappa $中的$\mathbf{\mathcal{F}}$进行处理。根据规则(1)，我们添加$\mathbf{letval}$结构并用$x_5$替换绑定变量$z$，它转换为
+        $\mathbf{letval}\; x_5 = 2\; \mathbf{in}\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (x\; k_2\; x_5))$。
+        我们将其记为$t_{cps1}$，那么当前的参数$\kappa $就是$\lambda x. t_{cps1}$。
+    \item 根据规则(7)处理$\mathbf{fix}$代码项，$\kappa(fact)$就是将$t_{cps1}$中的绑定变量名$x$替换为$fact$，
+    把$\mathbf{fix}$代码项的函数体部分记为$t_{cps2}$，CPS转换的目标程序变为：
+    \begin{equation}
+        \nonumber
+        \begin{aligned}
+        & \mathbf{letfun}\; fact\; k\; x = \mathbf{\mathcal{F}}(t_{cps2}, l_v, \lambda y. (k\; y))\; \mathbf{in} \\
+        & \quad (\mathbf{letval}\; x_5=2\; \mathbf{in}\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (fact\; k_2\; x_5))) \\
+        \end{aligned}
+    \end{equation}
+    \item 接下来的任务就是求出$\mathbf{\mathcal{F}}(t_{cps2}, l_v, \lambda y. (k\; y))$。
+        由于$t_{cps2}$是一个条件表达式，我们使用规则(4)处理它。
+        将当前的$\kappa$参数记为$\kappa_1$，将PCF子代码项$(x*(fact\; (x-1)))$记为$t_{cps3}$，目标转换为
+        $\mathbf{\mathcal{F}}(x, l_v, \lambda y. (\mathbf{ifz}\; y\; \mathbf{\mathcal{F}}(1, l_v, \kappa_1)\; \mathbf{\mathcal{F}}(t_{cps3}, l_v, \kappa_1)))$。
+        按照规则(2)，待处理PCF为变量时可以直接把当前的参数$\kappa$应用到变量$x$上。对于$\mathbf{\mathcal{F}}(1, l_v, \kappa_1)$可以使用规则(1)。
+        目标转换为$\mathbf{ifz}\; x\; \mathbf{letval}\; x_1 = 1\; \mathbf{in}\; (k\; x_1)\; \mathbf{\mathcal{F}}(t_{cps3}, $ \\ $l_v, \kappa_1)$。
+    \item 问题转换为求出$\mathbf{\mathcal{F}}(t_{cps3}, l_v, \kappa_1)$。对于二元算术运算，我们按照规则(5)进行处理。
+        由于第一个操作数$x$是一个变量，我们可以直接用它来替换新的参数$\kappa$中的绑定变量。
+        待求的程序变为$\mathbf{\mathcal{F}}(fact\; (x-1), l_v, \lambda m. (\mathbf{letop}\; x_3=x*m\; \mathbf{in}\; k\; x_3))$。
+        $fact$是函数名，同时也是变量名。将其应用到$(x-1)$上可以使用转换规则(3)。
+    \item 由于规则(1)、(2)、(3)和(5)在前几步的转换中都已经使用过，之后的转换步骤还是运用这几条规则，在此不再详述。
+        最终，我们得到的CPS目标程序就是图~\ref{factcps}所示的程序。
+\end{enumerate}
+
 \section{目标语言：类似LLVM IR的SSA语言}
 
 本文中使用的目标SSA语言是一种简化版本的LLVM IR，保留了其最基本的程序结构层次。
@@ -284,7 +318,8 @@ $pc$是程序计数器（Program Counter），用于定位当前指令，由三�
 以便对$\phi$-节点进行求值。$loc_{ssa}$是变量名到它们的值的映射。
 我们在堆栈$s_{ssa}$中保留调用当前函数的指令的程序计数器，以便在当前函数返回时能够返回到调用时的位置。
 
-SSA语言的操作语义转换规则如图~\ref{ssaopsem}所示。第一条规则描述了函数调用的程序状态转换。
+SSA语言的操作语义转换规则如图~\ref{ssaopsem}所示。
+第一条规则描述了函数调用的程序状态转换。
 控制流跳转到函数$f$的开头，并将函数返回地址存储在$s_{ssa}$中。
 $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$表示把从$x$到$v_0$的映射添加到$loc_{ssa}$中。
 例如，在图~\ref{factssa}中，当主函数调用$fact$函数时，按照图~\ref{ssaopsem}中的第一条规则，
@@ -292,6 +327,11 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 转换到$((fact,b_1,0),\, (main,b_1,1),\, loc_{ssa}$ \\ $[x\mapsto 2],\, \mathbf{push}\; s_{ssa}\; (main,b_1,1))$。
 第二条规则定义了当前函数返回并将返回值传递给调用语句时发生的状态转换。
 它从$s_{ssa}$的顶部取出程序计数器$npc$，存储返回值，并跳回该调用语句的位置。
+对于$\phi$-节点，我们利用$ppc$提供的信息得到前驱基本块的标签，从而确定变量$x$被赋予的值是哪个版本。
+二元算术运算语句、普通赋值语句和$\mathbf{icmp}$语句的处理方法类似，都是利用$loc_{ssa}$计算变量被赋予的具体值，并更新到映射中。
+在我们的SSA程序中，变量被使用之前一定是被赋值过的，所以可以计算出这些语句等号右边表达式结果值。
+对于无条件跳转和条件跳转语句，由于它们只是同一函数内不同基本代码块之间的跳转，我们只需求出新的基本块标签。
+当然，在下一个程序状态中$ppc$就变成了当前状态的$pc$。
 
 \begin{figure}[htbp]
     % \vspace*{-0.3cm}
@@ -331,6 +371,12 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 并专注于CPS到SSA转换的本质。在接下来的内容中我们将讨论这一点。
 
 \section{转换算法设计} \label{sec:cpsssatrans}
+
+我们设计了将CPS形式的PCF程序转换为SSA程序的转换算法。本质上，该转换过程是一个递归函数，
+它接受一个CPS代码项、一个SSA程序及其他信息作为其参数，不断将新的组件（例如基本代码块、指令等）
+放入当前SSA程序的特定位置，并在递归地翻译CPS代码项时更新其他参数。
+这些参数是确定新的组件具体内容及插入位置所必须的信息。
+一旦整个CPS程序的翻译完成，所得到的SSA程序就是我们需要的转换后的目标SSA程序。
 
 \begin{figure}[!ht]
     \centering
@@ -379,12 +425,6 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
     \caption{CPS到SSA的转换算法}\label{cps2ssa}
 \end{figure}
 
-我们设计了将CPS形式的PCF程序转换为SSA程序的转换算法。本质上，该转换过程是一个递归函数，
-它接受一个CPS代码项、一个SSA程序及其他信息作为其参数，不断将新的组件（例如基本代码块、指令等）
-放入当前SSA程序的特定位置，并在递归地翻译CPS代码项时更新其他参数。
-这些参数是确定新的组件具体内容及插入位置所必须的信息。
-一旦整个CPS程序的翻译完成，所得到的SSA程序就是我们需要的转换后的目标SSA程序。
-
 在转换算法~\ref{cps2ssa}中，函数$\mathcal{G}_{proc}$将输入的CPS代码项转换为SSA顶层翻译单元$t_{ssa}$。
 $t_{ssa}$具有一个主函数，主函数的返回值就是程序的结果。
 具体来说，它使用了函数$\mathcal{G}$对源程序进行处理。该函数将$(t_{cps}, t_{ssa}, pc, n, loc)$作为输入，
@@ -406,21 +446,21 @@ $\mathbf{app}_p$表示插入函数。
 处插入指令$[x=v;]$。
 
 我们通过将图中的CPS语言的阶乘程序示例（见图~\ref{factcps}）转换为SSA程序（见图~\ref{factssa}）
-来演示该转换算法的工作原理。
-\begin{enumerate}[label={(\alph*)}]
-    \item 根据转换规则（3），我们首先将$\mathbf{letfun}$代码项中的$\mathbf{ifz}$语句
+来演示该转换算法的工作原理。这里我们只详细描述主函数中的转换步骤，省略了$fact$函数体的生成。
+\begin{enumerate}
+    \item 根据转换规则(3)，我们首先将$\mathbf{letfun}$代码项中的$\mathbf{ifz}$语句
         转换为SSA函数$fact$的函数体并添加到初始的空白SSA程序中。
         假设更新后的SSA程序和参数分别是$t_0$、$n_0$和$loc_0$，转换后的下一步就是对
         $\mathcal{G}(\mathbf{letval}\; x_5=2\; \mathbf{in}\dots, t_0, (main,b_1,0), n_0,$ \\ $loc_0)$进行计算。   
-    \item 根据转换规则（1），我们在当前SSA程序$t_0$的$(main,b_1,0)$位置处插入赋值指令$[x_5=2;]$，
+    \item 根据转换规则(1)，我们在当前SSA程序$t_0$的$(main,b_1,0)$位置处插入赋值指令$[x_5=2;]$，
         并将新的SSA程序称为$t_1$。然后，我们的转换目标就变成了
         $\mathcal{G}(\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; (fact\; k_2\; x_5), t_1, n_0, loc_0)$。
-    \item 根据转换规则（4），我们首先应该处理$(fact\; k_2\; x_5)$。
-        根据转换规则（7），由于延续$k_2$是一个局部延续，我们将$[y = \mathbf{call}\; fact\; x_5;\; \mathbf{br}_{uc}\; k_2;]$
+    \item 根据转换规则(4)，我们首先应该处理$(fact\; k_2\; x_5)$。
+        根据转换规则(7)，由于延续$k_2$是一个局部延续，我们将$[y = \mathbf{call}\; fact\; x_5;\; \mathbf{br}_{uc}\; k_2;]$
         这两条指令分别插入到SSA程序的位置$(main,b_1,1)$和$(main,b_1,2)$中。
         然后，我们在SSA程序中添加一个空的基本代码块$k_2$，并将新的SSA程序命名为$t_2$。
         我们还将从$k_2$到$\mathbf{letcont}$代码项的映射添加到$loc_0$中，并将更新后的映射称为$loc_1$。
         这样，转换算法的目标变为$\mathcal{G}(k_{init}\; y, t_2, (main,k_2,0), n_0, loc_1)$。
-    \item 根据转换规则（6），我们将指令$[r_{k2} = y;\; \mathbf{ret}\; r_{k2};]$分别插入到
+    \item 根据转换规则(6)，我们将指令$[r_{k2} = y;\; \mathbf{ret}\; r_{k2};]$分别插入到
         $(main,k_2,0)$和$(main,k_2,1)$位置中。生成的目标SSA程序如图~\ref{factssa}所示。
 \end{enumerate}

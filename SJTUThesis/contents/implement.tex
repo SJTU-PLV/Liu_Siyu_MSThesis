@@ -170,7 +170,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
 其他结构同理，基本代码块转换为LLVMAst.block，函数转换为definition，顶层翻译单元转换为toplevel\_entities。
 得到Vellvm中的抽象语法树后，就可以利用其提供的工具进行LLVM程序的输出或使用LLVM后续的编译过程了。
 
-\subsection{定理证明的实现}
+\subsection{定理证明的实现} \label{sec:implthm}
 
 完成了程序语言小步操作语义的定义和编译算法的实现，我们就可以对第~\ref{ch:verify}节中
 介绍的相关定理进行证明了。
@@ -251,7 +251,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
 \end{lstlisting}
 
 那么，利用以上定理以及PCF到SSA的正向模拟，即可完成我们需要证明的目标定理~\ref{trm:bterm}和~\ref{trm:bdiv}。
-具体的证明方法已在第~\ref{sec:combback}节中进行介绍。
+具体的证明过程已在第~\ref{sec:combback}节中进行介绍。
 完成了这些证明，就能够说明PCF到SSA编译算法实现了语义保存。
 
 \section{Coq代码评估}

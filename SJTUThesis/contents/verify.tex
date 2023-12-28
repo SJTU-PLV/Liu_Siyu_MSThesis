@@ -48,30 +48,41 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 这两步转换的前向模拟证明结构相似，不过前者是使用多步模拟进行程序内部执行步骤的模拟，
 而后者是使用星形模拟进行程序内部执行步骤的模拟。我们在第~\ref{sec:compcertbackend}节中
 对这两种模拟进行过介绍。另外，由于CPS是函数式语言而SSA是
-命令式语言，后者程序状态的构成差异更大，它们之间的不变式定义也更为复杂。
+命令式语言，第二步转换源语言与目标语言的程序状态构成差异更大，它们之间的不变式定义也更为复杂。
 
 \section{CPS转换的前向模拟} \label{sec:cpsforward}
 
 \subsection{直接风格与CPS程序状态关系的不变式}
 
 我们已经在第\ref{sec:cpstrans}节中讨论了将直接风格的PCF程序转换为CPS形式的CPS转换算法。
-直接风格的PCF语言和与CPS语言之间的程序状态的不变量$\sim$关系在图\ref{simrelationcps}中定义如下。
+直接风格的PCF语言和与CPS语言之间的程序状态的不变式$\sim$关系在图\ref{simrelationcps}中定义如下。
+如第~\ref{sec:smallop}中的介绍，一种程序语言可以有多种不同的正确小步操作语义。
+我们为直接风格的PCF程序定义了保存上下文信息的语义，正是为了更方便地将其与CPS程序状态关联起来。
 
-图~\ref{simrelationcps}中定义的$\sim$关系递归地关联了PCF程序和CPS程序的相应部分。
-规则(2)、(6)和(8)根据程序状态中的上下文和应用于值的延续变量$k$定义了PCF和CPS的匹配状态。
-以规则(2)为例，当处理到PCF程序的值时，我们查看保存的上下文可以知道它是用来替换$t_2$代码项中的绑定变量$x$。
-对于相应的CPS程序，由于我们已经把计算用延续$k$明确表示了出来，只需要查看延续体，就可以知道它是用来
-替换代码项$u_1$中的绑定变量$x$。规则(2)的成立可以进一步推出规则(1)
-中$(t_1, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s}))$前提的成立。
-至于下一步处理PCF代码项$t_2$和CPS代码项$u_1$的程序状态是否满足不变式，还需要根据它们的类型另外判断。
-规则(6)和(8)的处理逻辑与规则(2)类似。
-规则(4)定义了函数调用状态的匹配关系，都表示把$v$作为参数调用函数$f$。
-规则(9)定义了最终状态的匹配关系，PCF程序状态转换为没有下文的结果值，
-CPS程序则将顶层延续变量$k_{init}$应用到结果值。
-其他规则根据子代码项的关系递归地定义了匹配状态。
-例如，规则(1)定义了PCF中$\mathbf{let}$语句与CPS中相应的$\mathbf{letcont}$语句的匹配状态。
-在PCF程序中，使用$t_1$的值在$t_2$中替代变量$x$。在CPS程序中，在$u_2$中通过续延$k$把值传递给CPS项$u_1$。
-因此，这两组子代码项符合$\sim$关系应当是这条规则的先决条件。规则(3)、(5)和(7)的递归定义与之类似。
+图~\ref{simrelationcps}中定义的$\sim$关系递归地关联了PCF程序和CPS程序的相应部分。总体来说，
+直接风格与CPS形式的PCF程序结构上的对应关系较为直观。
+接下来我们会对其进行详细说明。
+\begin{itemize}
+  \item 规则(2)、(6)和(8)根据程序状态中的上下文和应用于值的延续变量$k$定义了PCF和CPS的匹配状态。
+  以规则(2)为例，当处理到PCF程序的值时，我们查看保存的上下文可以知道它是用来替换$t_2$代码项中的绑定变量$x$。
+  对于相应的CPS程序，由于我们已经把计算用延续$k$明确表示了出来，只需要查看延续体，就可以知道它是用来
+  替换代码项$u_1$中的绑定变量$x$。规则(2)的成立可以进一步推出规则(1)
+  中$(t_1, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s}))$前提的成立。
+  至于下一步处理PCF代码项$t_2$和CPS代码项$u_1$的程序状态是否满足不变式，还需要根据它们的类型另外判断。
+  规则(6)和(8)的处理逻辑与规则(2)类似。可以看出，我们实际上并不需要知道CPS程序中延续$k$的延续体是什么类型，
+  只需要能确定是将一个局部延续应用到值$v$上，而不是函数的返回延续。至于延续体与相应PCF程序项是否匹配，
+  我们会在处理引入延续的表达式时进行判断。
+  \item 规则(4)定义了函数调用状态的匹配关系，都表示把$v$作为参数调用函数$f$。PCF程序状态中的上下文
+  是$\mathbf{ fix }$代码项，说明当前值$v$会作为函数参数。CPS程序中则不需要去观察$k$是局部延续还是
+  函数的返回延续。因为，在我们设计的CPS转换算法中，函数返回值也算作一步计算。如果返回的是调用某个函数
+  的结果，我们会引入新的局部延续来命名这一步计算。
+  \item 规则(9)定义了最终状态的匹配关系，PCF程序状态转换为没有下文的结果值，
+  CPS程序则将顶层延续变量$k_{init}$应用到结果值。
+  \item 其他规则根据子代码项的关系递归地定义了匹配状态。
+  例如，规则(1)定义了PCF中$\mathbf{let}$语句与CPS中相应的$\mathbf{letcont}$语句的匹配状态。
+  在PCF程序中，使用$t_1$的值在$t_2$中替代变量$x$。在CPS程序中，在$u_2$中通过续延$k$把值传递给CPS项$u_1$。
+  因此，这两组子代码项符合$\sim$关系应当是这条规则的先决条件。规则(3)、(5)和(7)的递归定义与之类似。
+\end{itemize}
 
 \begin{figure}[htbp]
     \centering
@@ -79,49 +90,49 @@ CPS程序则将顶层延续变量$k_{init}$应用到结果值。
     \begin{gather*}
     \tag{1} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2)\; c t x \quad
-        t_{c p s} = \mathbf { letcont }\; k\; x=u_1\; \mathbf{ in }\; u_2 \\
+        t_{c p s} = \textcolor{blue}{\mathbf { letcont }\; k\; x=u_1\; \mathbf{ in }\; u_2} \\
         (t_1, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \\
         (t_2, ctx)\sim (u_1, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \end{matrix}}
         {(\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2, c t x) \sim (t_{c p s}, l_{c p s})}} \\
     \tag{2} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (\mathbf{ let }\; x=t_1\; \mathbf{ in }\; t_2)\; c t x \quad
-        l_{cps}\; k = \mathbf{letcont}\; k\; x = u_1\; \mathbf{in}\; u_2 \end{matrix}}
-        {(v, ctx')\sim (k\; v, l_{cps})}} \\
+        l_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k\; x = u_1\; \mathbf{in}\; u_2} \end{matrix}}
+        {(v, ctx')\sim (\textcolor{blue}{k\; v}, l_{cps})}} \\
     \tag{3} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (\mathbf{ fix }\; f\; x\; t_1)\; c t x \quad
-        t_{cps} = \mathbf{ letfun }\; f\; k\; x\; u_1\; \mathbf{ in }\; u_2  \\
+        t_{cps} = \textcolor{blue}{\mathbf{ letfun }\; f\; k\; x\; u_1\; \mathbf{ in }\; u_2}  \\
         (t_2, c t x') \sim (u_2, u p d a t e\; l_{c p s}\; (k \mapsto t_{c p s})) \\
         (t_1, ctx)\sim (u_1, update\; l_{cps}\; (k \mapsto t_{cps})) \end{matrix}}
         {((\mathbf{ fix }\; f\; x\; t_1)\; t_2, ctx)\sim (t_{cps}, l_{c p s})}} \\
     \tag{4} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (\mathbf{ fix }\; f\; x\; t)\; ctx \end{matrix}}
-        {(v, ctx')\sim (f\; k\; v, l_{cps})}} \\
+        {(v, ctx')\sim (\textcolor{blue}{f\; k\; v}, l_{cps})}} \\
     \tag{5} \displaystyle{\frac{\begin{matrix}
         c t x'=c t x_{seq}\; (op\; t_1\; t_2)\; c t x \quad
         t_{op} = \mathbf{ letop }\; y = op\; x_1\; x_2\; \mathbf{in}\; (k\; y) \\
-        t_{cps2} = \mathbf{ letcont }\; k_2\; x_2 = t_{op}\; \mathbf{in}\; u_2 \quad
-        t_{cps1} = \mathbf{ letcont }\; k_1\; x_1 = t_{cps2}\; \mathbf{ in }\; u_1 \\
+        t_{cps2} = \textcolor{blue}{\mathbf{ letcont }\; k_2\; x_2 = t_{op}\; \mathbf{in}\; u_2} \quad
+        t_{cps1} = \textcolor{blue}{\mathbf{ letcont }\; k_1\; x_1 = t_{cps2}\; \mathbf{ in }\; u_1} \\
         (t_1, ctx')\sim (u_1, update\; l_{cps}\; (k_1 \mapsto t_{cps1})) \\
         (t_2, ctx')\sim (u_2, update\; l_{cps}\; (k_2 \mapsto t_{cps2})) \end{matrix}}
         {(op\; t_1\; t_2, ctx)\sim (t_{cps1}, l_{cps})}} \\
     \tag{6} \displaystyle{\frac{\begin{matrix}
         ctx'=ctx_{seq}\; (op\; t_1\; t_2)\; ctx \quad
-        l_{cps}\; k = \mathbf{letcont}\; k_1\; x_1 = t\; \mathbf{in}\; u_1 \end{matrix}}
-        {(v, ctx')\sim (k_1\; v, l_{cps})}} \\    
+        l_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k_1\; x_1 = t\; \mathbf{in}\; u_1} \end{matrix}}
+        {(v, ctx')\sim (\textcolor{blue}{k_1\; v}, l_{cps})}} \\    
     \tag{7} \displaystyle{\frac{\begin{matrix}
         ctx'=ctx_{seq}\; (\mathbf{ ifz }\; t_1\; t_2\; t_3)\; ctx \quad
-        t_{if} = \mathbf{ ifz }\; x\; u_2\; u_3 \\
-        t_{cps} = \mathbf{letcont}\; k\; x = t_{if}\; \mathbf{in}\; u_1 \quad
+        t_{if} = \textcolor{blue}{\mathbf{ ifz }\; x\; u_2\; u_3} \\
+        t_{cps} = \textcolor{blue}{\mathbf{letcont}\; k\; x = t_{if}\; \mathbf{in}\; u_1} \quad
         (t_1, ctx')\sim (u_1, update\; l_{cps}\; (k \mapsto t_{cps})) \\
         (t_2, ctx)\sim (u_2, l_{cps}) \quad (t_3, ctx)\sim (u_3, l_{cps}) \end{matrix}}
         {(\mathbf{ ifz }\; t_1\; t_2\; t_3, ctx)\sim (t_{cps}, l_{cps})}} \\
     \tag{8} \displaystyle{\frac{\begin{matrix}
         ctx'=ctx_{seq}\; (\mathbf{ ifz }\; t_1\; t_2\; t_3)\; ctx \quad
-        l_{cps}\; k = \mathbf{letcont}\; k\; x = (\mathbf{ ifz }\; x\; u_2\; u_3)\; \mathbf{in}\; u_1 \end{matrix}}
-        {(v, ctx')\sim (k\; v, l_{cps})}} \\
+        l_{cps}\; k = \textcolor{blue}{\mathbf{letcont}\; k\; x = u_1\; \mathbf{in}\; u_2} \end{matrix}}
+        {(v, ctx')\sim (\textcolor{blue}{k\; v}, l_{cps})}} \\
     \tag{9} \displaystyle{\frac{\begin{matrix}
         c t x' = ctx_{stop} \end{matrix}}
-        {(v, ctx')\sim (k_{init}\; v, l_{cps})}} \\
+        {(v, ctx')\sim (\textcolor{blue}{k_{init}\; v}, l_{cps})}} \\
     \end{gather*}
     \caption{PCF与CPS程序状态之间的$\sim$关系规则}\label{simrelationcps}
 \end{figure}
@@ -196,23 +207,33 @@ PCF和转换得到的CPS程序初始程序状态需满足上一节中所定义�
 延续$k$的延续体与从基本块$k$开始的一部分SSA代码相关联。
 当局部延续$k$应用于变量$x$时，相应的SSA指令将$x$赋值给与$k$的绑定变量同名的变量，并跳转到名为$k$的基本块。
 
-$\sim$关系的规则定义如图~\ref{fig:simrelation}所示。规则(1)和(3)定义了CPS中将延续应用到某个值与
-SSA程序中赋值、终止指令之间的匹配关系。在规则(1)中，将局部延续$k$应用到变量$x$上，
-实际上就是用$x$来替换延续体中的绑定变量，也就对应着SSA程序中的赋值和跳转。
-由于我们在进行CPS到SSA的转换时，使用了局部延续变量的名字作为与延续体对应SSA基本代码块的标签，
-跳转命令$\mathbf{br_{uc}}$的目标块标签就是$k$。
-可以看到，在涉及到添加赋值命令的SSA程序状态中，我们需要即时更新变量名到它们值的映射。
-在规则(3)中，$k$则是函数的返回延续或者顶层延续。这种情况下，$x$就是函数的返回值，本次程序调用运行到这里就该结束了。
-所以，对应的SSA程序中是添加了将$x$返回的命令。
-规则(2)和(4)说明如果CPS程序包含类似$t$和$u$的子代码项，
-则子代码项与相应位置的SSA代码片段应递归地相关联。
-使用$\mathbf{letcont}$引入局部延续或者使用$\mathbf{letfun}$引入返回延续，
-都需要以子代码项的匹配作为前提。
-规则(5)定义了函数调用时的状态匹配关系。无论是CPS程序还是SSA程序，由于下一步程序状态就会
-进入被调用的函数，我们关注的问题实际上不是被调用函数本身，而是让函数调用结束后在当前函数内的状态匹配。
-在这里我们依然利用延续变量名$k$与相应基本代码块标签相同的性质，让SSA程序跳转到基本块$k$。
-规则(6)和(7)展示了赋值表达式及二元算术运算表达式的匹配关系。
-规则(8)定义了与条件语句的子代码项$t_1$和$t_2$相关联的特定基本块的匹配状态。
+$\sim$关系的规则定义如图~\ref{fig:simrelation}所示。接下来我们会详细解释这些规则的含义及细节。
+\begin{itemize}
+  \item 规则(1)和(3)定义了CPS中将延续应用到某个值与
+  SSA程序中赋值、终止指令之间的匹配关系。在规则(1)中，将局部延续$k$应用到变量$x$上，
+  实际上就是用$x$来替换延续体中的绑定变量，也就对应着SSA程序中的赋值和跳转。
+  由于我们在进行CPS到SSA的转换时，使用了局部延续变量的名字作为与延续体对应SSA基本代码块的标签，
+  跳转命令$\mathbf{br_{uc}}$的目标块标签就是$k$。
+  可以看到，在涉及到添加赋值命令的SSA程序状态中，我们需要即时更新变量名到它们值的映射。
+  在规则(3)中，$k$则是函数的返回延续或者顶层延续。这种情况下，$x$就是函数的返回值，本次程序调用运行到这里就该结束了。
+  所以，对应的SSA程序中是添加了将$x$返回的命令。
+  \item 规则(2)和(4)说明如果CPS程序包含类似$t$和$u$的子代码项，
+  则子代码项与相应位置的SSA代码片段应递归地相关联。
+  使用$\mathbf{letcont}$引入局部延续或者使用$\mathbf{letfun}$引入返回延续，
+  都需要以相应子代码项的匹配作为前提。对于SSA程序来说，对应的代码片段可能是某一函数，
+  也可能是若干基本代码块。其起始位置可以由函数或基本块的标签确定，因为我们在转换
+  算法中会使用与CPS程序相应结构对应的标签名字。
+  \item 规则(5)定义了函数调用时的状态匹配关系。无论是CPS程序还是SSA程序，由于下一步程序就会
+  进入被调用的函数，我们关注的问题实际上不是被调用函数本身，而是让函数调用结束后在当前函数内的状态匹配。
+  在这里我们依然利用延续变量名与相应基本代码块标签相同的性质，让SSA程序跳转到基本块$k$。
+  \item 规则(6)和(7)展示了赋值表达式及二元算术运算表达式的匹配关系。
+  由于在CPS程序中$\mathbf{letval}$表达式只能将值赋给变量$x$，我们可以很方便地将其转换为SSA程序
+  中的一条赋值命令。二元算术运算表达式同理，CPS程序中的两个操作数只能是值，就避免了对其进行额外的转换。
+  \item 规则(8)定义了与条件语句的子代码项$t_1$和$t_2$相关联的特定基本块的匹配状态。与CPS中
+  $\mathbf{ifz}$表达式对应的SSA语句是条件跳转命令$\mathbf{br_c}$。当然，我们首先需要用$\mathbf{icmp}$
+  命令得到跳转条件$b_n$。由于我们的转换算法按照特定的规则对$t_1$和$t_2$相应的SSA基本块进行了命名，
+  此时只需要按照相同的规则找到下一步$pc$的位置。
+\end{itemize}
 
 \begin{figure}[htbp]
     \centering
@@ -270,10 +291,15 @@ SSA程序中赋值、终止指令之间的匹配关系。在规则(1)中，将�
 \subsection{度量函数的设计}
 
 如第\ref{sec:verifyoverview}节中所述，我们使用在第\ref{sec:compcertbackend}节中
-介绍的星形模拟来关联CPS和SSA程序内部执行时的状态。当CPS程序处理到$\mathbf{letcont}$代码项时，
-可能会出现无限驻留问题：CPS程序需要进行一步转换，而目标SSA程序则不需要转换，就能和转换后的CPS程序状态匹配。
-为了解决无限驻留问题，我们需要为源程序的状态定义一种度量函数$M$，在源程序执行过程中，
-如果遇到目标程序驻留的情况，该度量函数需严格递减。
+介绍的星形模拟来关联CPS和SSA程序内部执行时的状态。
+当CPS程序需要进行一步转换，目标SSA程序可能不需要进行转换，就能和转换后的CPS程序状态匹配。
+这种情况只会发生在CPS程序处理到$\mathbf{letcont}$代码项时。CPS程序需要再走一步，
+才能开始处理$\mathbf{letcont}$代码项的子代码项。但是SSA程序的当前位置已经是需要继续处理的
+子代码片段初始位置了。
+这样一来，CPS到SSA的转换可能会出现无限驻留问题：CPS源程序发散，而编译得到的SSA程序停留在某个状态不动。
+
+为了解决无限驻留问题，我们需要为源程序的状态定义一种度量函数$M$：在CPS源程序执行过程中，
+如果遇到目标程序驻留的情况（即源程序走一步，目标程序不动），该度量函数需严格递减。
 在本文中，我们使用$\mathbf{letcont}$结构的数量作为该度量，如图\ref{fig:measure}所示。
 其实，从直觉上也可以感知到，只要CPS程序代码项中$\mathbf{letcont}$结构数量不是无限多，就不会出现无限驻留的情况。
 
@@ -301,8 +327,8 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
 \begin{equation}
 \mathtt{initial}(t_{ssa}) = (t_{ssa}, (main, empty, 0), (main, empty, 0),loc_{empty}, s_{empty}).
 \end{equation}
-即$pc$指向主函数起始位置，映射$loc$和栈$s$都是空的。
-定理\ref{def:fsimssa}说明了在程序初始状态时$\sim$关系成立，我们直观地对该定理进行定义展开即可证明。
+即$pc$和$ppc$指向主函数起始位置，映射$loc$和栈$s$都是空的。
+定理\ref{def:fsimssa}说明了在CPS和SSA程序初始状态时，$\sim$关系成立。我们直观地对该定理进行定义展开即可证明。
 定理\ref{trm:simustep2}说明了$\sim$关系在程序内部执行步骤中仍然成立。
 
 我们通过对$S_{cps}\rightarrow S'_{cps}$的一步转换进行归纳来证明定理~\ref{trm:simustep2}。
@@ -311,7 +337,7 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
 且能够从$S_{ssa}$经过若干步转换到达$S'_{ssa}$。
 当然，我们需要知道经过SSA目标语言的哪些小步操作语义步骤能够到达$S'_{ssa}$。
 当目标程序不进行转换就已经满足$S'_{cps}\sim S_{ssa}$的情况下，程序发生了驻留，
-我们需要证明$M(S'_{cps})<M(S_{cps})$来确保不会发生无限驻留。
+此时我们需要证明$M(S'_{cps})<M(S_{cps})$来确保不会发生无限驻留。
 
 \begin{theorem}[CPS到SSA转换中初始状态的模拟]\label{def:fsimssa}
     \begin{tabbing}
@@ -332,8 +358,12 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
     \end{tabbing}
   \end{theorem}
 
-为了理解在前向模拟证明中程序内部执行步骤的模拟是如何工作的，我们以图~\ref{factcps}和图~\ref{factssa}中计算阶乘的CPS和SSA程序为例。
-一开始，它们的初始状态通过$\sim$相关联。根据它们的小步操作语义，下一个程序状态是：
+为了说明在前向模拟证明中程序内部执行步骤的模拟是如何工作的，我们以图~\ref{factcps}和图~\ref{factssa}中
+计算阶乘的CPS和SSA程序为例，对前几步执行步骤的模拟进行具体介绍。
+为方便起见，我们将图~\ref{factssa}中的程序命名为$fact_{ssa}$。
+在写出CPS程序状态时，我们省略CPS代码项的一部分，仅保留判断操作语义规则所需的程序结构。
+一开始，它们的初始状态通过$\sim$相关联。根据它们的小步操作语义，CPS程序和SSA程序都经过一步转换，
+下一个程序状态是：
 
 \begin{itemize}
     \item $S_{cps1}:\; (\mathbf{letval}\; x_5=2\; \mathbf{in}\dots,\, loc_{empty}\; [k\mapsto fact_{cps}])$
@@ -341,16 +371,19 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
 \end{itemize}
 
 为了证明$S_{cps1}\sim S_{ssa1}$成立，我们提取$(main, b_1, 0)$位置处的指令$[x_5 = 2;]$。
+图~\ref{fig:simrelation}中的规则(6)说明此时不变式依然成立。
 $S_{cps1}$和$S_{ssa1}$中更新后的映射分别被命名为$loc_{cps1}$和$loc_{ssa1}$。
-经过一步转换之后，CPS和SSA程序的状态变为：
+各自经过一步转换之后，CPS和SSA程序的状态变为：
 
 \begin{itemize}
-    \item $S_{cps2}:\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\dots, loc_{cps1})$
+    \item $S_{cps2}:\; (\mathbf{letcont}\; k_2\; y=k_{init}\; y\; \mathbf{in}\; fact\; k_2\; x_5, loc_{cps1})$
     \item $S_{ssa2}:\; (fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\, s_{empty})$
 \end{itemize}
 
-根据图~\ref{fig:simrelation}中的规则(2)，我们需要把子代码项$(k_{init}\; y)$和$(fact\; k_2\; x_5)$
+根据图~\ref{fig:simrelation}中的规则(2)，为了证明$S_{cps2}\sim S_{ssa2}$，
+我们需要把CPS子代码项$(k_{init}\; y)$和$(fact\; k_2\; x_5)$
 分别与相应的SSA代码片段使用$\sim$关系匹配起来。
+也就是说，我们首先需要证明：
 
 \begin{itemize}
     \item $(k_{init}\; y,\, loc_{cps1}\; [k_2\mapsto t_{cps2}])\sim $ \\ $(fact_{ssa},\, (main, b_1, 1),\, (main, empty, 0),\, loc_{ssa1},\; s_{empty})$
@@ -358,14 +391,17 @@ $S_{cps1}$和$S_{ssa1}$中更新后的映射分别被命名为$loc_{cps1}$和$lo
 \end{itemize}
 
 第一条匹配关系可以由规则(3)建立，而第二条匹配关系则可以由规则(5)建立。
-
+之后，CPS程序进行一步转换，SSA驻留。再下一步它们就会双双进入被调用的$fact$函数中。
+后续的转换过程较多，不再详述。
 如以上证明过程所示，我们可以一步步将CPS程序和SSA程序进行转换，并始终能找到它们符合$\sim$
 关系的中间状态。最终，就可以得到结论，它们都会终止并返回相同的值。
 
-与第\ref{sec:cpsforward}节中类似，利用定理~\ref{def:fsimcps}和定理~\ref{def:fsimcps2}，我们就可以证明出转换得到的
-SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n$，转换后得到的SSA程序也终止并返回$n$。
-如果CPS程序发散，转换后得到的SSA程序也发散。
-即定理~\ref{trm:ssabhvpt}和定理~\ref{trm:ssabhvpd}。
+与第\ref{sec:cpsforward}节中类似，利用定理~\ref{def:fsimcps}和定理~\ref{def:fsimcps2}，我们就可以证明出
+CPS到SSA转换算法的前向模拟，即
+定理~\ref{trm:ssabhvpt}和定理~\ref{trm:ssabhvpd}。
+转换得到的SSA程序会保存安全的CPS源程序具有的行为。
+定理~\ref{trm:ssabhvpt}表示，如果CPS程序终止并返回$n$，转换后得到的SSA程序也终止并返回$n$。
+定理~\ref{trm:ssabhvpd}表示，如果CPS程序发散，转换后得到的SSA程序也发散。
 
 \begin{theorem}[SSA程序对CPS程序终止行为的保存]\label{trm:ssabhvpt} 
     \begin{tabbing}
@@ -386,18 +422,22 @@ SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n
 \section{组合与后向模拟} \label{sec:combback}
 
 将以上两节中得到的前向模拟性质相关定理进行组合，就可以得到整个编译过程的前向模拟。
-组合定理~\ref{trm:cpsbhvpt}和定理~\ref{trm:ssabhvpt}，即可证明定理~\ref{trm:topt}。
-组合定理~\ref{trm:cpsbhvpd}和定理~\ref{trm:ssabhvpd}，即可证明定理~\ref{trm:topd}。
+正如第~\ref{sec:verifyoverview}节中所述，整个编译过程用$Comp$来表示，
+它由CPS转换$\mathcal{F}_{proc}$和CPS到SSA的转换$\mathcal{G}_{proc}$组合而成。
+所以，$Comp(t_{pcf})$就得到了安全PCF源程序编译后的SSA目标程序。
+对于终止行为，组合定理~\ref{trm:cpsbhvpt}和定理~\ref{trm:ssabhvpt}，即可证明定理~\ref{trm:topt}。
+对于发散性为，组合定理~\ref{trm:cpsbhvpd}和定理~\ref{trm:ssabhvpd}，即可证明定理~\ref{trm:topd}。
 定理~\ref{trm:topt}表示，如果PCF程序终止并返回$n$，则转换后得到的SSA程序也终止并返回$n$。
 定理~\ref{trm:topt}表示，如果PCF程序发散，则转换后得到的SSA程序也发散。
+
 为了证明后向模拟，我们还证明了目标SSA语言的确定性，即定理~\ref{trm:ssadeter}。
-它表示对于任意一个会终止的SSA程序，其返回值是唯一确定的。
+它表示，对于任意一个会终止的SSA程序，其返回值是唯一确定的。
 
   \begin{theorem}[SSA程序对PCF程序终止行为的保存]\label{trm:topt} 
     \begin{tabbing}
      \\
     \quad\=$\forall \; t_{pcf}\; t_{ssa}\; n,\; $\=\kill
-    \>$\forall \; t_{pcf}\; t_{ssa}\; n,\; t_{pcf}\Downarrow n\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{pcf}) \Longrightarrow t_{ssa}\Downarrow n.$
+    \>$\forall \; t_{pcf}\; t_{ssa}\; n,\; t_{pcf}\Downarrow n\; \wedge \; t_{ssa}=Comp(t_{pcf}) \Longrightarrow t_{ssa}\Downarrow n.$
     \end{tabbing}
   \end{theorem}
   
@@ -405,7 +445,7 @@ SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n
     \begin{tabbing}
       \\
     \quad\=\kill
-    \>$\forall \; t_{pcf}\; t_{ssa},\; t_{pcf}\Uparrow\; \wedge \; t_{ssa}=\mathcal{G}_{proc}(t_{pcf})\Longrightarrow t_{ssa}\Uparrow.$
+    \>$\forall \; t_{pcf}\; t_{ssa},\; t_{pcf}\Uparrow\; \wedge \; t_{ssa}=Comp(t_{pcf})\Longrightarrow t_{ssa}\Uparrow.$
     \end{tabbing}
   \end{theorem}  
 
@@ -437,6 +477,7 @@ SSA程序会与CPS程序具有相同的行为。如果CPS程序终止并返回$n
     定理~\ref{trm:bdiv}得证。
 \end{itemize}
 
-证明了完整编译过程对安全程序的反向模拟，就能够说明该转换算法具有语义保存性质，
-即转换得到的SSA程序保存了PCF源程序的语义。这样，我们就得到了一条由PCF程序到SSA程序的
-经验证的编译链。
+证明了完整编译过程对安全程序的反向模拟，就能够说明该转换算法具有语义保存性质。
+即，转换得到的SSA程序保存了PCF源程序的语义，SSA程序的行为是可接受的PCF程序。
+这样，我们就得到了一条由PCF程序到SSA程序的经验证的编译链。
+在定理证明器Coq实现这些定理证明代码的过程将在之后的第~\ref{sec:implthm}节中进行详述。
