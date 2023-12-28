@@ -71,7 +71,7 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
     我们还利用该经验证的编译链构建了PCF语言的编译器原型。它是部分经过形式化验证的，
     为未来构建更复杂更完整的经验证函数式语言编译器打下基础。
     具体而言，我们首先实现并验证了直接风格PCF语言的CPS转换，并将它连接到经验证的CPS到SSA的编译过程。
-    然后，我们通过Vellvm提供的抽象语法（Vellvm是一个经过验证的LLVM基础设施~\cite{zakowski2021modular}），
+    然后，我们通过Vellvm提供的抽象语法（Vellvm是一个经过验证的LLVM基础设施~\cite{vellvm2012,zakowski2021modular}），
     将SSA中间语言转换为LLVM IR。
     
 \end{itemize}

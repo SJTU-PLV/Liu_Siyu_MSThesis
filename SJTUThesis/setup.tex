@@ -217,6 +217,8 @@
     backgroundcolor   = \color{gray!10},
     % Default style fors listings
     basicstyle=\normalsize,
+    % numbers=left,
+    % numberstyle=\small\color{gray},
     % Position of captions is bottom
     captionpos=b,
     % flexible columns
@@ -287,6 +289,8 @@
 }
 \lstnewenvironment{codeblock}[1][]{%
   \lstset{style=lstStyleCode,#1}}{}
+% 将lstlisting的名称修改为中文
+\renewcommand\lstlistingname{代码}
 
 % 直立体数学符号
 \providecommand{\dd}{\mathop{}\!\mathrm{d}}
