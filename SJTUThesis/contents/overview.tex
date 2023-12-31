@@ -2,10 +2,10 @@
 \chapter{基于SSA的PCF函数式编译器概览} \label{sec:overview}
 
 我们构建了一个从函数式语言PCF到LLVM IR的部分经过验证的编译器，并在Coq定理证明工具中
-完成了编译算法和形式化验证的实现~\cite{chlipala2022certified}。
+完成了编译算法和对核心编译步骤形式化验证的实现。
 在本节中，我们主要是从高层次的角度介绍了这个编译器原型，省略了转换算法设计和证明定理的详细信息。
 CPS转换及CPS到SSA转换的正确性通过源程序和目标程序之间的模拟进行形式化验证，
-遵循第\ref{sec:compcertbackend}节中所介绍的CompCert后端的验证框架。
+遵循第~\ref{sec:compcertbackend}节中所介绍的CompCert后端的验证框架。
 我们使用$\approx $表示语义保存性质。PCF、CPS和SSA的程序分别表示为$t_{pcf}$、$t_{cps}$和$t_{ssa}$。
 通过对$t_{pcf}\approx t_{cps}$和$t_{cps}\approx t_{ssa}$的形式化证明，可以组合推导出$t_{pcf}\approx t_{ssa}$。
 然后我们就得到了一个从PCF到SSA的经验证的编译过程。我们应用该经验证的编译过程，构建出一个编译器原型。
