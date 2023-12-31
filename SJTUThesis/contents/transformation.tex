@@ -2,13 +2,16 @@
 
 \chapter{CPS到SSA中间语言的转换算法} \label{ch:trans}
 
+在本章中，我们首先定义了CPS到SSA转换算法的源语言和目标语言，
+给出了它们的语法及语义，然后详细介绍了该转换算法的设计和转换规则。
+为了得到CPS形式的源语言，我们还介绍了将直接风格PCF程序进行CPS转换的算法。
+我们还使用示例程序详细演示了这两个转换算法的工作流程。
+
 \section{源语言：CPS形式的PCF语言} \label{sec:cps}
 
-PCF（Programming Computable Functions）是一种被广泛应用于研究的函数式语言~\cite{plotkin1977lcf}。
-尽管PCF是一种小规模的语言，但它是图灵完备的，即所有可计算的函数都可以表示为PCF程序。
-把它作为该编译框架的源语言，不会使算法和验证过于复杂而无法完成，也能够说明关键问题。
+如第\ref{sec:overview}章中所述，PCF是一种被广泛应用于研究的函数式语言~\cite{plotkin1977lcf}。
 在本节中，我们定义了直接风格和CPS形式PCF语言的语法和小步操作语义。
-我们还展示了将直接风格PCF转换为CPS形式的算法。
+我们还描述了将直接风格PCF程序转换为CPS形式的算法。
 
 \subsection{源语言的语法和语义}
 
