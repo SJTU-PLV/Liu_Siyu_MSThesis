@@ -3,19 +3,20 @@
 \begin{abstract}[zh]
   静态单赋值（Static Single Assignment, SSA）形式的中间语言（Intermediate Representation, IR）
   被现代主流编译器基础设施广泛采用。
-  这是因为它能够实现许多基于数据流分析的编译优化，从而显著提高编译器的编译效率。
+  这是因为它能够实现许多基于数据流分析的编译优化，从而显著提高编译效率和程序性能。
   现有的函数式编译器一般会将源程序编译为延续传递风格（Continuation Passing Style, CPS），
   以得到明确的控制流。
-  函数式语言编译器如果想利用基于数据流分析的丰富优化，就需要将延续传递风格的程序与静态单赋值中间语言连接起来。
+  为了使函数式语言编译器利用基于数据流分析的丰富优化，就需要将延续传递风格的程序与静态单赋值中间语言连接起来。
   编译器作为重要的系统软件，其正确性也一直是研究者们不断探讨的方向。
   随着形式化方法理论和工具的发展，编译器的形式化验证已经被证明是确保编译过程正确性的有效方法。
+  本研究的目的是构建一个经过形式化验证的编译过程，它把延续传递风格的程序编译到静态单赋值语言，
+  为兼顾编译正确性和效率提供方法。
 
   本文研究了如何将关键的函数式语言编译过程与静态单赋值中间语言通过形式化方法联系起来，
   从而在确保编译正确性的情况下使函数式语言的编译器能够充分利用静态单赋值中间语言的优势。
   我们设计了从延续传递风格的函数式程序到静态单赋值中间语言的转换算法，
   并对该转换算法进行了基于模拟技术的形式化验证。
-  建立了这样的联系，才能够使经验证的函数式编译器复用基于静态单赋值的程序分析与编译优化，
-  从而使高可靠的函数式编译器得到效率提升。
+  建立了这样的联系，才能够使经验证的函数式编译器复用基于静态单赋值的程序分析与编译优化。
   本文还以代表性的基础函数式编程语言PCF（Programming Computable Functions）为研究对象，
   应用该经验证的编译过程构建出了PCF语言到LLVM中间语言的函数式编译器。
   具体而言，我们首先读入直接风格的PCF源程序，将其转换为延续传递风格，再编译到静态单赋值中间语言。
@@ -26,36 +27,37 @@
 
 \begin{abstract}[en]
   Intermediate Representation (IR) in Static Single Assignment (SSA) form
-  has been widely adopted by modern mainstream compiler infrastructures.
-  It facilitates numerous compilation optimizations based on data-flow analysis,
-  so as to significantly improve the performance of compilers.
+  has been widely adopted by mainstream compiler infrastructures.
+  It facilitates numerous optimizations based on data-flow analysis,
+  so as to significantly improve the performance of compilers and generated programs.
   Existing functional compilers often translate source programs into 
   Continuation Passing Style (CPS) to achieve explicit control flow. 
-  To harness the improvement provided by optimizations based on data-flow analysis, 
+  To utilize the optimizations based on data-flow analysis, 
   a functional compiler needs to establish a connection between 
   programs in CPS and the SSA IR. 
-  As essential components of system software, correctness of compilers have been the 
+  As essential components of system software, correctness of compilers has been the 
   subject of continuous exploration by researchers.
   With the development of the theory and tools for formal methods, 
   the formal verification of compilers has proven to be an effective approach 
   in ensuring their correctness.
+  Our goal is to construct a verified compilation that compiles CPS programs to SSA language,
+  providing an approach that guarantees correctness while enhancing performance.
   
   This paper investigates how to formally connect the key processes 
   of functional language compilation with SSA intermediate language, 
-  enabling functional language compilers to harness the advantages of SSA 
+  enabling functional language compilers to take the advantages of SSA 
   while ensuring compilation correctness. 
-  In this paper, we design a transformation algorithm from CPS functional programs 
-  to SSA intermediate language and formally verify this transformation algorithm 
+  In this paper, we design a transformation algorithm from CPS programs 
+  to SSA IR and formally verify this transformation algorithm 
   using simulation methods. Establishing such a connection enables 
   verified functional compilers to leverage SSA-based program analysis 
-  and compilation optimizations, thus enhancing the efficiency of 
-  highly reliable compilers for functional languages. 
-  Furthermore, this paper takes the representative foundational functional 
+  and compilation optimizations. 
+  Furthermore, this paper takes the representative functional 
   programming language, PCF (Programming Computable Functions), 
-  as the source language. Applying the verified compilation process, 
+  as the source language. Applying the verified compilation, 
   we construct a functional compiler for translating PCF programs to 
-  LLVM intermediate language. Specifically, it involves the initial transformation
-  of the direct-style PCF source code into CPS, followed by compilation into the SSA. 
+  LLVM IR. Specifically, it involves the initial transformation
+  of the direct-style PCF into CPS, followed by compilation into the SSA. 
   We formally verify the correctness of this compilation chain and connect it to the LLVM IR. 
   It provides the foundation for constructing a verified, high-performance, 
   and highly reliable functional compiler. All the transformation algorithms and 

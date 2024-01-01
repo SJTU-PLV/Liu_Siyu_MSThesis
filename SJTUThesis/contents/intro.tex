@@ -88,7 +88,7 @@ SSA中间语言在工业编译器中大大流行，因为它可以通过强制�
 
 在第\ref{ch:related}章中，我们讨论了领域内与本课题相关的工作，
 包括一些经验证的函数式编译器和与静态单赋值中间语言有关的工作。
-然后，我们简要介绍了本文中构建的部分经验证的编译链。
+然后，我们在第\ref{sec:overview}章简要介绍了本文中构建的部分经验证的编译链。
 我们在第\ref{ch:trans}章中具体探讨了该编译过程的源语言与目标语言，并为它们提供了
 小步操作语义。之后，我们设计并实现了从源语言到目标语言的编译算法，
 并用示例程序展示了该算法的主要思想及工作过程。
@@ -158,6 +158,7 @@ CPS是函数式语言编译器中常见的中间表示形式。
 \begin{figure}
     % \vspace{-0.3cm}
     \centering
+    \vspace{2ex}
     \begin{subfigure}[b]{0.4\textwidth}
         \flushright
     % \small
@@ -382,6 +383,7 @@ P_1 \Downarrow B \Longrightarrow \mathcal{T}(P_1) \Downarrow B.
 
 \begin{figure}[htbp]
     \centering
+    \vspace{2ex}
     \includegraphics[width=0.7\linewidth]{figures/relation.pdf}
     \caption{语义保存性质关系}\label{fig:relation}
 \end{figure}

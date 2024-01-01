@@ -2,6 +2,7 @@
 
 \chapter{编译链实现与评估} \label{ch:implement}
 
+\setcounter{lstlisting}{1}
 \section{代码实现}
 
 如第\ref{sec:overview}章中所述，我们主要使用了交互式定理证明器Coq实现
@@ -63,6 +64,7 @@ Coq并没有提供通常的原子数据类型（布尔值、整数、字符串�
 CPS和SSA语言的语法和小步操作语义结构与之类似。不过SSA语言的语法结构和程序状态组成都更加复杂，
 在定义小步操作语义时也需要更多的辅助函数，例如由$pc$值获取该位置指令的方法$\mathbf{code}_{at}$等。
 
+\vspace{1ex}
 \begin{lstlisting}[language=Coq, caption=Coq中的PCF语法与语义定义结构, label=code:pcf]
     Inductive  pcf_term : Set  := ...
     Record  pcf_state  :=  mk_state {t : pcf_term;  ctx : context;}.
@@ -77,6 +79,7 @@ CPS和SSA语言的语法和小步操作语义结构与之类似。不过SSA语�
 进行解释器测试主要是为了找出操作语义和转换算法中的问题，为接下来的证明减少阻碍。形式化验证过程本身与解释器没有关系。
 PCF语言的解释器定义结构如代码~\ref{code:pcfinter}所示。
 
+\vspace{1ex}
 \begin{lstlisting}[language=Coq, caption=Coq中的PCF语言的解释器, label=code:pcfinter]
     Inductive  pcf_result : Type  := 
         |  terminate : nat  ->  pcf_result 
@@ -105,6 +108,7 @@ CPS转换算法~\ref{algo:cpstrans}和CPS到SSA的转换算法~\ref{cps2ssa}均�
 然后，我们需要能够根据已处理的条件语句数量$n$生成新的基本代码块标签的操作fresh\_block\_label。
 之后，我们就可以实现~\ref{sec:cpsssatrans}节中的转换算法了。
 
+\vspace{1ex}
 \begin{lstlisting}[language=Coq, caption=Coq中CPS到SSA的转换算法, label=code:cpsssa]  
     Definition  app_i  (i : instruction)  (t : ssa_term)  (p : pc)  : 
         ssa_term  := ... 
@@ -140,6 +144,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
 其中，从旧的SSA状态ssa\_state到新状态之间经历的若干步小步操作语义转换规则需要在
 证明时具体给出，这样才能保证ssa\_state'是从ssa\_state出发可以到达的状态。
 
+\vspace{1ex}
 \begin{lstlisting}[language=Coq, caption=Coq中CPS到SSA程序内部执行步骤模拟的证明, label=code:cpsssav]  
     Inductive  match_state  :  cps_state  ->  ssa_state  ->  
         Prop  := ...
@@ -180,6 +185,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
         由它编译得到的SSA程序ssa\_term也不会终止。
 \end{itemize}
 
+\vspace{1ex}
 \begin{lstlisting}[language=Coq, caption=Coq中后向模拟证明所需的定理, label=code:back]  
     Theorem  ssa_step_determinism:
         forall  state  state1  state2,
@@ -211,7 +217,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
 \section{Coq代码评估}
 
 Coq中各主要模块类别和内容的代码行数（Lines of Code, LOC）如表~\ref{tabeval}。
-可以看到，相关定理的证明即转换算法验证部分是工作量占比最大的。
+可以看到，工作量占比最大的是语义保存性质相关定理的证明，即形式化验证部分。
 我们没有对PCF语法分析器的代码进行LOC评估，因为正如第~\ref{sec:pcfparser}节中所说，
 它们是利用ocamllex和ocamlyacc工具生成的。
 这里只统计了Coq中从PCF抽象语法树到目标SSA程序抽象语法树的编译与验证代码，它们是根据

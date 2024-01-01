@@ -13,7 +13,9 @@
 
 % 论文基本配置，加载宏包等全局配置
 \input{setup}
-
+\AtBeginDocument{
+  \renewcommand\thelstlisting{\arabic{chapter}--\arabic{lstlisting}}
+}
 \begin{document}
 
 %TC:ignore
