@@ -210,7 +210,7 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
         ->  ~ (ssa_can_terminate  ssa_term).
 \end{lstlisting}
 
-那么，利用以上定理以及PCF到SSA的正向模拟，即可完成我们需要证明的目标定理~\ref{trm:bterm}和~\ref{trm:bdiv}。
+那么，利用以上定理以及PCF到SSA的前向模拟，即可完成我们需要证明的目标定理~\ref{trm:bterm}和~\ref{trm:bdiv}。
 具体的证明过程已在第~\ref{sec:combback}节中进行介绍。
 完成了这些证明，就能够说明PCF到SSA编译算法实现了语义保存。
 
@@ -218,6 +218,9 @@ INSTR\_Op指令，但是需要为其指定$f$和$v$的类型。在这里我们�
 
 Coq中各主要模块类别和内容的代码行数（Lines of Code, LOC）如表~\ref{tabeval}。
 可以看到，工作量占比最大的是语义保存性质相关定理的证明，即形式化验证部分。
+其中，两步前向模拟所证明的是第~\ref{sec:cpsforward}节和第~\ref{sec:cpsssaforward}节中
+所述的定理。将它们组合起来证明了第~\ref{sec:combback}节中完整编译过程的前向模拟。
+最后，我们结合SSA目标语言的确定性证明了第~\ref{sec:verifyoverview}节中的后向模拟相关定理。
 我们没有对PCF语法分析器的代码进行LOC评估，因为正如第~\ref{sec:pcfparser}节中所说，
 它们是利用ocamllex和ocamlyacc工具生成的。
 这里只统计了Coq中从PCF抽象语法树到目标SSA程序抽象语法树的编译与验证代码，它们是根据
