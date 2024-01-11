@@ -1,15 +1,24 @@
 
-\section{总结及已发表成果}
+\section{总结与展望}
 
-\begin{frame}{研究工作进展}
-    本课题研究工作按计划有序开展：
-    \begin{itemize}
-      \item 定义源程序语言及目标程序语言。
-      \item 实现直接风格源语言的CPS转换。
-      \item CPS到SSA的转换算法设计及实现。
-      \item 用模拟技术对两步转换进行正确性验证。
-      \item 将SSA程序编译到LLVM IR。
-    \end{itemize}
+\begin{frame}
+  \frametitle{总结与展望}
+  \textcolor{DarkBlue}{本文工作总结：}
+  \begin{itemize}
+      \item 提供了一个\textcolor{Maroon}{经验证的}从CPS到SSA的转换过程。
+      \item 建立了一个关键编译步骤经验证的\textcolor{Maroon}{函数式编译器}，与LLVM IR连接。
+  \end{itemize}
+  \vspace{1ex}
+  \textcolor{DarkBlue}{研究展望：}
+  \begin{itemize}
+    \item 把研究扩展到工业级函数式语言编译器（如SML/NJ）。
+    \item 对函数式程序使用局部无名表示。
+  \end{itemize}
+  \vspace{1ex}
+  \textcolor{DarkBlue}{已发表成果：} \\
+  \footnotesize
+  \textbf{Liu Siyu}, \& Wang Yuting (2023, June). \textit{Verified Transformation of Continuation-Passing 
+  Style into Static Single Assignment Form}. In International Symposium on 
+  Theoretical Aspects of Software Engineering (pp. 20-37). (CCF-C)
   \end{frame}
-
 

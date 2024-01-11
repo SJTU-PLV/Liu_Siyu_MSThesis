@@ -22,12 +22,12 @@
 \begin{frame}{研究动机}
     \begin{itemize}
       \item SSA程序可以用函数式程序表示。CPS和SSA程序在结构上有对应之处。
-      \item 目前\textcolor{Maroon}{没有}从CPS到SSA经过形式化验证的转换。
+      \item 目前\textcolor{Maroon}{没有}从CPS到SSA\textcolor{Maroon}{经过形式化验证}的转换。
       \item 我们希望经验证的函数式编译器能够利用SSA的优势。
     \end{itemize} 
     \begin{figure}
       \centering
-      \includegraphics[width=0.7\linewidth]{figures/motiva.pdf}
+      \includegraphics[width=0.8\linewidth]{figures/motiva.pdf}
       \label{fig:moti1}
     \end{figure}
 \end{frame}
@@ -39,22 +39,30 @@
     \item 基于\textcolor{Maroon}{模拟（simulation）}的验证。
   \end{itemize}
   \vspace{2ex}
-  函数式语言与命令式语言的\textcolor{Maroon}{程序状态}组成部分\textcolor{Maroon}{差异较大}：
+  函数式语言与命令式语言的\textcolor{DarkBlue}{程序状态}组成部分\textcolor{DarkBlue}{差异较大}：
   \begin{itemize}
-    \item CPS：代码项，延续变量信息
-    \item SSA：程序计数器，符号表，调用栈...
+    \item \textcolor{Maroon}{CPS}：代码项，延续变量信息
+    \item \textcolor{Maroon}{SSA}：程序计数器，符号表，调用栈...
   \end{itemize}
-  想要使用模拟技术，需要把两种不同的程序状态正确地\textcolor{Maroon}{匹配}起来。
+  想要使用模拟技术，需要把两种不同的程序状态正确地\textcolor{DarkBlue}{匹配}起来。
 \end{frame}
 
-\begin{frame}{主要贡献}
-  \begin{itemize}
-    \item 实现并验证CPS到SSA语言的转换算法。
-    \item 可以使经过形式化验证的函数式语言编译器复用基于SSA语言的优化。
-  \end{itemize}
+\begin{frame}{主要贡献 1}
+  \large
+  设计并验证了\textcolor{DarkBlue}{CPS到SSA}语言的转换算法。
   \begin{figure}
     \centering
-    \includegraphics[width=0.7\linewidth]{figures/partial.pdf}
-    \label{fig:moti2}
+    \includegraphics[width=0.95\linewidth]{figures/part.pdf}
   \end{figure}  
 \end{frame}
+
+\begin{frame}{主要贡献 2}
+  \large
+  利用该经验证的编译过程构建了\textcolor{DarkBlue}{PCF到LLVM IR}的函数式编译器。
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/whole.pdf}
+  \end{figure}  
+\end{frame}
+
+
