@@ -217,6 +217,7 @@ CPS是函数式语言编译器中常见的中间表示形式。
 CPS形式函数式程序的使用可以追溯到Scheme的编译器中~\cite{saint2006shard}。
 之后，CPS形式的中间语言被应用到了SML-New Jersey编译器的基本框架中~\cite{woodruff2018optimising}。
 为了利用CPS形式中间语言的优势，研究者们设计了多种将直接风格的函数式程序进行CPS转换的方法。
+针对CPS转换的研究一直是函数式编程中重要的方向。
 其中Plotkin的方法需要在后续进行管理性缩减（Administrative Reduction），以去除转换中产生的冗余$\lambda$结构~\cite{plotkin1977lcf}。
 Felleisen等人提出了另一种方法非组合式的方法，其基于$\lambda$-演算的语义。
 Danvy和Nielsen将这两种方法联系起来，可以只通过一步转换完成，不需要在后续过程中进行管理性缩减\cite{danvy2007one}。
@@ -226,6 +227,7 @@ Andrew根据对之前的研究者们关于CPS的工作的观察和总结，提�
 Andrew基于Standard ML语言的一部分演示了如何对函数式程序进行CPS转换。
 他使用了Danvy和Nielsen的一步（One-Pass）CPS转换算法思想，把上下文作为参数，
 让转换算法知道当前代码项被翻译之后会嵌入到哪里。
+Taro等人使用仿射类型构建了支持隐式多态的CPS转换，并证明其实现了类型保存~\cite{taro2021cpstrans}。
 
 \subsection{静态单赋值} \label{sec:bg_ssa}
 

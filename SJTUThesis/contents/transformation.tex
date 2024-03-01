@@ -121,29 +121,48 @@ $\mathbf{let}$表达式在$t_2$中用代码项$t_1$的值替换变量$x$。
 
 \begin{figure}[t]
     \centering
-    \begin{subfigure}[t]{0.43\textwidth}
-        \setlength{\jot}{10pt}
-        \begin{gather*}
-            \displaystyle{\frac{t_{pcf}=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
-            \displaystyle{\frac{t_1\; is\; a\; value\quad t_3=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2 [t_1/x],\; ctx)}} \\
-            \displaystyle{\frac{v\; is\; a\; value\quad t_3=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(v,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_3 [v/t_1],\; ctx)}} \\
-            \displaystyle{\frac{t_{pcf}=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
-            \displaystyle{(\mathbf{ifz}\; 0\; t_2\; t_3,\; ctx)\rightarrow (t_2,\; ctx)} \\
-            \displaystyle{\frac{n \neq 0}{(\mathbf{ifz}\; n\; t_2\; t_3,\; ctx)\rightarrow (t_3,\; ctx)}} \\
-        \end{gather*}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.55\textwidth}
-        \setlength{\jot}{10pt}
-        \begin{gather*}
-            \displaystyle{\frac{t_{pcf}=((\mathbf{fix}\; f\; x\; t_1)\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (\mathbf{fix}\; f\; x\; t_1)\; ctx)}} \\
-            \displaystyle{\frac{t_2\; is\; a\; value\quad t_3=(\mathbf{fix}\; f\; x\; t_1)} {(t_2,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_1 [t_2/x,t_3/f],\; ctx)}} \\
-            \displaystyle{(op\; t_1\; t_2,\; ctx)\rightarrow (t_1,\; ctx_{seq}\; (op\; t_1\; t_2,\; ctx)\; ctx)} \\
-            \displaystyle{\frac{v_1\; is\; a\; value\quad t_3=(op\; t_1\; t_2,\; ctx)} {(v_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)}} \\
-            \displaystyle{\frac{v_1,\; v_2\; are\; values\quad n=\mathbf{eval}_{op}\; op\; v_1\; v_2}{(v_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)\rightarrow (n,\; ctx)}} \\
-        \end{gather*}
-    \end{subfigure}   
+    \setlength{\jot}{10pt}
+    \begin{gather*}
+        \tag*{ps\_let\_app} \displaystyle{\frac{t_{pcf}=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+        \tag*{ps\_let\_abs} \displaystyle{\frac{t_1\; is\; a\; value\quad t_3=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2 [t_1/x],\; ctx)}} \\
+        \tag*{ps\_if\_zero} \displaystyle{(\mathbf{ifz}\; 0\; t_2\; t_3,\; ctx)\rightarrow (t_2,\; ctx)} \\
+        \tag*{ps\_if\_notzero} \displaystyle{\frac{n \neq 0}{(\mathbf{ifz}\; n\; t_2\; t_3,\; ctx)\rightarrow (t_3,\; ctx)}} \\
+        \tag*{ps\_if\_app} \displaystyle{\frac{t_{pcf}=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+        \tag*{ps\_if\_abs} \displaystyle{\frac{v\; is\; a\; value\quad t_3=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(v,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_3 [v/t_1],\; ctx)}} \\
+        \tag*{ps\_fix\_app} \displaystyle{\frac{t_{pcf}=((\mathbf{fix}\; f\; x\; t_1)\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (\mathbf{fix}\; f\; x\; t_1)\; ctx)}} \\
+        \tag*{ps\_fix\_abs} \displaystyle{\frac{t_2\; is\; a\; value\quad t_3=(\mathbf{fix}\; f\; x\; t_1)} {(t_2,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_1 [t_2/x,t_3/f],\; ctx)}} \\
+        \tag*{ps\_op\_fst} \displaystyle{(op\; t_1\; t_2,\; ctx)\rightarrow (t_1,\; ctx_{seq}\; (op\; t_1\; t_2,\; ctx)\; ctx)} \\
+        \tag*{ps\_op\_snd} \displaystyle{\frac{v_1\; is\; a\; value\quad t_3=(op\; t_1\; t_2,\; ctx)} {(v_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)}} \\
+        \tag*{ps\_op\_cal} \displaystyle{\frac{v_1,\; v_2\; are\; values\quad n=\mathbf{eval}_{op}\; op\; v_1\; v_2}{(v_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)\rightarrow (n,\; ctx)}} \\
+    \end{gather*}  
     \caption{直接风格的PCF语言小步操作语义转换规则} \label{pcfopsem}
 \end{figure}
+
+% \begin{figure}[t]
+%     \centering
+%     \begin{subfigure}[t]{0.43\textwidth}
+%         \setlength{\jot}{10pt}
+%         \begin{gather*}
+%             \displaystyle{\frac{t_{pcf}=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+%             \displaystyle{\frac{t_1\; is\; a\; value\quad t_3=(\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2)} {(t_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2 [t_1/x],\; ctx)}} \\
+%             \displaystyle{\frac{v\; is\; a\; value\quad t_3=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(v,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_3 [v/t_1],\; ctx)}} \\
+%             \displaystyle{\frac{t_{pcf}=(\mathbf{ifz}\; t_1\; t_2\; t_3)} {(t_{pcf},\; ctx)\rightarrow (t_1,\; ctx_{seq}\; t_{pcf}\; ctx)}} \\
+%             \displaystyle{(\mathbf{ifz}\; 0\; t_2\; t_3,\; ctx)\rightarrow (t_2,\; ctx)} \\
+%             \displaystyle{\frac{n \neq 0}{(\mathbf{ifz}\; n\; t_2\; t_3,\; ctx)\rightarrow (t_3,\; ctx)}} \\
+%         \end{gather*}
+%     \end{subfigure}
+%     \begin{subfigure}[t]{0.55\textwidth}
+%         \setlength{\jot}{10pt}
+%         \begin{gather*}
+%             \displaystyle{\frac{t_{pcf}=((\mathbf{fix}\; f\; x\; t_1)\; t_2)} {(t_{pcf},\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (\mathbf{fix}\; f\; x\; t_1)\; ctx)}} \\
+%             \displaystyle{\frac{t_2\; is\; a\; value\quad t_3=(\mathbf{fix}\; f\; x\; t_1)} {(t_2,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_1 [t_2/x,t_3/f],\; ctx)}} \\
+%             \displaystyle{(op\; t_1\; t_2,\; ctx)\rightarrow (t_1,\; ctx_{seq}\; (op\; t_1\; t_2,\; ctx)\; ctx)} \\
+%             \displaystyle{\frac{v_1\; is\; a\; value\quad t_3=(op\; t_1\; t_2,\; ctx)} {(v_1,\; ctx_{seq}\; t_3\; ctx)\rightarrow (t_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)}} \\
+%             \displaystyle{\frac{v_1,\; v_2\; are\; values\quad n=\mathbf{eval}_{op}\; op\; v_1\; v_2}{(v_2,\; ctx_{seq}\; (op\; v_1\; t_2)\; ctx)\rightarrow (n,\; ctx)}} \\
+%         \end{gather*}
+%     \end{subfigure}   
+%     \caption{直接风格的PCF语言小步操作语义转换规则} \label{pcfopsem}
+% \end{figure}
 
 CPS形式的PCF语言的小步操作语义表示的推导规则形如
 \begin{equation}
@@ -162,25 +181,18 @@ $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[t]{0.43\textwidth}
-        \setlength{\jot}{10pt}
-        \begin{gather*}
-            \displaystyle{\frac{t_{cps}=(\mathbf{letval}\; x=v\; \mathbf{in}\; t)} {(t_{cps},\; loc_{cps})\rightarrow (t [v/x],\; loc_{cps})}} \\
-            \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; 0\; t_1\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_1,\; loc_{cps})}} \\
-            \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; n\; t_1\; t_2)\quad n \neq 0} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps})}} \\
-            \displaystyle{\frac{loc_{cps}\; k = (\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)}{(k\; v,\; loc_{cps})\rightarrow (t_1 [v/x],\; loc_{cps})}} \\
-        \end{gather*}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.55\textwidth}
-        \setlength{\jot}{10pt}
-        \begin{gather*}
-            \displaystyle{\frac{t_{cps}=(\mathbf{letop}\; x=op\; v_1\; v_2\; \mathbf{in}\; t)}
-            {(t_{cps},\; loc_{cps})\rightarrow (t [(\mathbf{eval}_{op}\; op\; v_1\; v_2)/x],\; loc_{cps})}} \\
-            \displaystyle{\frac{t_{cps}=(\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [f\mapsto t_{cps}])}} \\
-            \quad \displaystyle{\frac{loc_{cps}\; f = (\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)}{(f\; k_0\; x_0,\; loc_{cps})\rightarrow (t_1 [x_0/x, k_0/k],\; loc_{cps})}} \\
-            \displaystyle{\frac{t_{cps}=(\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [k\mapsto t_{cps}])}} 
-        \end{gather*}
-    \end{subfigure}   
+    \setlength{\jot}{10pt}
+    \centering
+    \begin{gather*}
+        \tag*{cs\_val} \displaystyle{\frac{t_{cps}=(\mathbf{letval}\; x=v\; \mathbf{in}\; t)} {(t_{cps},\; loc_{cps})\rightarrow (t [v/x],\; loc_{cps})}} \\
+        \tag*{cs\_if\_zero} \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; 0\; t_1\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_1,\; loc_{cps})}} \\
+        \tag*{cs\_if\_notzero} \displaystyle{\frac{t_{cps}=(\mathbf{ifz}\; n\; t_1\; t_2)\quad n \neq 0} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps})}} \\
+        \tag*{cs\_cont\_app} \displaystyle{\frac{loc_{cps}\; k = (\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)}{(k\; v,\; loc_{cps})\rightarrow (t_1 [v/x],\; loc_{cps})}} \\
+        \tag*{cs\_cont} \displaystyle{\frac{t_{cps}=(\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [k\mapsto t_{cps}])}} \\
+        \tag*{cs\_letop} \displaystyle{\frac{t_{cps}=(\mathbf{letop}\; x=op\; v_1\; v_2\; \mathbf{in}\; t)}{(t_{cps},\; loc_{cps})\rightarrow (t [(\mathbf{eval}_{op}\; op\; v_1\; v_2)/x],\; loc_{cps})}} \\
+        \tag*{cs\_fun} \displaystyle{\frac{t_{cps}=(\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)} {(t_{cps},\; loc_{cps})\rightarrow (t_2,\; loc_{cps}\; [f\mapsto t_{cps}])}} \\
+        \tag*{cs\_fun\_app} \quad \displaystyle{\frac{loc_{cps}\; f = (\mathbf{letfun}\; f\; k\; x=t_1\; \mathbf{in}\; t_2)}{(f\; k_0\; x_0,\; loc_{cps})\rightarrow (t_1 [x_0/x, k_0/k],\; loc_{cps})}}
+    \end{gather*}   
     \caption{CPS形式的PCF语言小步操作语义转换规则}\label{cpsopsem}
 \end{figure}
 
@@ -343,23 +355,23 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
     % \small
     \setlength{\jot}{10pt}
     \begin{gather*}
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (y=\mathbf{call}\; f\; v_0)\quad \mathbf{arg}\; f = x}
+        \tag*{ss\_call} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (y=\mathbf{call}\; f\; v_0)\quad \mathbf{arg}\; f = x}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((f,b_1,0),\; pc,\; loc_{ssa}\; [x\mapsto v_0],\; \mathbf{push}\; s_{ssa}\; pc )}} \\
         % & \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; id = phi,\quad n = \mathbf{eval}_{phi}\ phi\ ppc\ loc_{ssa} } {(pc,\; ppc,\; loc_{ssa},\; ploc_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; id\mapsto n,\; ploc_{ssa})}} \\
-        \displaystyle{\frac{\begin{matrix}\mathbf{code}_{at}\; pc\; =\; (\mathbf{ret}\; v)\quad pc.l_f \neq main\quad npc = \mathbf{top}\; s_{ssa}
+        \tag*{ss\_ret} \displaystyle{\frac{\begin{matrix}\mathbf{code}_{at}\; pc\; =\; (\mathbf{ret}\; v)\quad pc.l_f \neq main\quad npc = \mathbf{top}\; s_{ssa}
         \\ \mathbf{code}_{at}\; npc\; =\; (x=\mathbf{call}\; f\; v_0)\end{matrix}} 
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (npc+1,\; pc,\; loc_{ssa}\; [x\mapsto v],\; \mathbf{pop}\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\overline{\phi_a})\quad n\; =\; \mathbf{eval}_{\phi}\ \overline{\phi_a}\ ppc}
+        \tag*{ss\_phi} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\overline{\phi_a})\quad n\; =\; \mathbf{eval}_{\phi}\ \overline{\phi_a}\ ppc}
             {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=op\; v_1\; v_2)\quad n\; =\; \mathbf{eval}_{exp}\ loc_{ssa}\ op\; v_1\; v_2}
+        \tag*{ss\_op} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=op\; v_1\; v_2)\quad n\; =\; \mathbf{eval}_{exp}\ loc_{ssa}\ op\; v_1\; v_2}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=v)\quad n\; =\; v\; is\; value?\; v\; :\; (loc_{ssa}\; v)}
+        \tag*{ss\_assign} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=v)\quad n\; =\; v\; is\; value?\; v\; :\; (loc_{ssa}\; v)}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\mathbf{icmp}\; v_1\; v_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v_1\; v_2)\; n=1\; \mathbf{else}\; n=0}
+        \tag*{ss\_icmp} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (x=\mathbf{icmp}\; v_1\; v_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v_1\; v_2)\; n=1\; \mathbf{else}\; n=0}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow (pc+1,\; ppc,\; loc_{ssa}\; [x\mapsto n],\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_{uc}}\; l)}
+        \tag*{ss\_br\_uc} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_{uc}}\; l)}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((pc.l_f, l, 0),\; pc,\; loc_{ssa},\; s_{ssa})}} \\
-        \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_c}\; v\; l_1\; l_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v\; 0)\; l_n=l_1\; \mathbf{else}\; l_n=l_2}
+        \tag*{ss\_br\_c} \displaystyle{\frac{\mathbf{code}_{at}\; pc\; =\; (\mathbf{br_c}\; v\; l_1\; l_2)\quad \mathbf{if}\; (\mathbf{equal}_{val}\; loc_{ssa}\; v\; 0)\; l_n=l_1\; \mathbf{else}\; l_n=l_2}
         {(pc,\; ppc,\; loc_{ssa},\; s_{ssa})\rightarrow ((pc.l_f, l_n, 0),\; pc,\; loc_{ssa},\; s_{ssa})}}
     \end{gather*}
     \caption{目标SSA语言的小步操作语义转换规则}\label{ssaopsem}
