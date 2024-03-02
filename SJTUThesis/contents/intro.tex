@@ -39,7 +39,7 @@ L2C的源语言是被广泛用于安全关键的工业领域（高铁、核电�
 广泛采用\cite{belanger-cpp2013,dargaye2009verification,zoe-oopsla2021,zoe-icfp2021,wang-esop2016}。
 然而，这也意味着经验证的函数式编译器不能直接得到主流编译器基础设施（例如LLVM和GCC）的支持。
 这些主流编译器基础设施采用静态单赋值（Static Single Assignment, SSA）形式的中间语言。 
-SSA中间语言在工业编译器中大大流行，因为它可以通过强制让每个变量只能被赋值一次来实现
+SSA中间语言在工业编译器中被广泛使用，因为它可以通过强制让每个变量只能被赋值一次来实现
 便捷而准确的数据流分析（Data-Flow Analysis, DFA），进而实现各种基于数据流分析的激进优化。
 许多流行的命令式编程语言（例如Rust~\cite{balasubramanian2017system}和Swift~\cite{zhang2012swift}）
 使用这些编译器基础设施作为其后端，生成性能优越的代码~\cite{lattner2006introduction}。

@@ -53,7 +53,7 @@
     \end{figure}
 
 最基本的PCF代码项（Term）包含自然数$i$和变量$x$。将代码项$t_1$应用到代码项$t_2$上表示为$t_1\; t_2$。
-我们使用$\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2$表示在$t_2$中将变量$x$替换为$t_1$的值。
+本文使用$\mathbf{let}\; x = t_1\; \mathbf{in}\; t_2$表示在$t_2$中将变量$x$替换为$t_1$的值。
 PCF中的条件表达式记作$\mathbf{ifz}\; t_1\; t_2\; t_3$。如果$t_1$的值为0，则整个代码项规约到$t_2$。
 否则，它将规约到$t_3$。PCF中的不动点代码项是$\mathbf{fix}\; f\; x\; t$，其中$t$中可能出现$f$。
 例如，图~\ref{factpcf}中展示了使用直接风格的PCF实现阶乘功能并应用到参数2的程序。
@@ -174,10 +174,10 @@ CPS形式的PCF语言的小步操作语义转换规则如图~\ref{cpsopsem}所�
 $\mathbf{letval}$表达式可以将新的值引入代码项$t$，我们只需要在$t$中用$v$替换变量$x$。
 对于代码项$(\mathbf{letcont}\; k\; x=t_1\; \mathbf{in}\; t_2)$，
 首先对$t_2$求值并更新$loc_{cps}$，添加从延续变量$k$到该代码项的映射。
-我们使用$loc_{cps}\; [k\mapsto t_{cps}]$这种标记来表示对映射$loc_{cps}$的更新操作。
+本文使用$loc_{cps}\; [k\mapsto t_{cps}]$这种标记来表示对映射$loc_{cps}$的更新操作。
 当把延续$k$应用于值$v$时（用$k\; v$表示），由于$t_1$是延续$k$的延续体，我们将$t_1$中的变量$x$替换为$v$。
 $\mathbf{letfun}$代码项的规约与之类似，当我们遇到$\mathbf{letfun}$结构时，我们会更新从$f$到该项的映射。
-当我们将延续$k_0$和变量$x_0$作为参数传递给$f$时，我们分别用$k_0$和$x_0$替换函数体$t_1$中的$k$和$x$。
+当我们将延续$k_0$和变量$x_0$作为参数传递给$f$时，本文分别用$k_0$和$x_0$替换函数体$t_1$中的$k$和$x$。
 
 \begin{figure}[htbp]
     \centering
@@ -298,7 +298,7 @@ $t_{pcf}$是待转换的PCF程序。$\kappa$的结构表示为$\lambda x. t'_{cp
     \caption{SSA目标语言的语法}\label{synssa}
 \end{figure}
 
-我们使用的目标SSA语言的语法定义如图~\ref{synssa}所示。
+本文使用的目标SSA语言的语法定义如图~\ref{synssa}所示。
 顶层的翻译单元（Translation Unit）$t$由一系列函数定义组成。
 一个函数$f$包含函数名$l_1$、参数$l_2$和一系列基本代码块$\overline{b}$。
 一个基本代码块$b$由它的标签$l$、$\overline{\phi}$节点序列、指令$\overline{a}$序列和一个终止指令（Terminator）$r$组成。
@@ -379,11 +379,11 @@ $\mathbf{arg}\; f$表示获取函数$f$的参数，$loc_{ssa}\; [x\mapsto v_0]$�
 
 \subsection{含有自由变量的函数}
 
-我们的目标SSA语言与LLVM IR之间的一个重要区别在于，$loc_{ssa}$是一个全局映射（Global Mapping），
+本文的目标SSA语言与LLVM IR之间的一个重要区别在于，$loc_{ssa}$是一个全局映射（Global Mapping），
 我们允许函数包含未在该函数中定义的自由变量（Free Variables）。这样做是因为我们的源语言是带有自由变量的高阶函数。
 典型的函数式语言编译器会对CPS程序使用闭包转换（Closure Conversion），将开放函数转换为闭包。
 闭包转换的形式化验证已经得到广泛研究~\cite{paraskevopoulou2019closure,wang-esop2016}。
-为简单起见，我们没有将闭包转换包含在我们的编译链中。我们的SSA语言支持闭包和开放函数，
+为简单起见，本文没有将闭包转换包含在我们的编译链中。我们的SSA语言支持闭包和开放函数，
 并专注于CPS到SSA转换的本质。在接下来的内容中我们将讨论这一点。
 
 \section{转换算法设计} \label{sec:cpsssatrans}
@@ -462,7 +462,7 @@ $\mathbf{app}_p$表示插入函数。
 例如，规则（1）中的$(\mathbf{app}_i\; t_{ssa}\; pc\; [x=v;])$表示在$t_{ssa}$的位置$pc$
 处插入指令$[x=v;]$。
 
-我们通过将图中的CPS语言的阶乘程序示例（见图~\ref{factcps}）转换为SSA程序（见图~\ref{factssa}）
+本文通过将图中的CPS语言的阶乘程序示例（见图~\ref{factcps}）转换为SSA程序（见图~\ref{factssa}）
 来演示该转换算法的工作原理。这里我们只详细描述主函数中的转换步骤，省略了$fact$函数体的生成。
 \begin{enumerate}
     \item 根据转换规则(3)，我们首先将$\mathbf{letfun}$代码项中的$\mathbf{ifz}$语句

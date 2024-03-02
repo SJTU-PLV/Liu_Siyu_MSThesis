@@ -34,7 +34,7 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
     \end{tabbing}
   \end{theorem}
 
-我们通过使用第\ref{sec:compcertbackend}节中介绍的模拟技术来证明语义保存性质的相关定理。
+本文通过使用第\ref{sec:compcertbackend}节中介绍的模拟技术来证明语义保存性质的相关定理。
 首先，我们需要为每个转换步骤建立前向模拟，然后将前向模拟性质组合成为完整编译过程的前向模拟。
 然后，我们证明了目标SSA语言具有确定性，并将安全程序的前向模拟转化为对安全程序的后向模拟。
 该证明依赖于这样一个性质：不可继续转换的PCF程序总是会返回一个值，即不会陷入停滞状态，才能视为终止。
@@ -43,10 +43,10 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 （Locally Nameless Representation）的方法来解决证明该性质的问题。
 最后，我们得到了转换过程的后向模拟，说明其实现了语义保存。
 
-我们在接下来的两节中将分别对$\mathcal{F}_{proc}$和$\mathcal{G}_{proc}$两步转换过程的
+本文在接下来的两节中将分别对$\mathcal{F}_{proc}$和$\mathcal{G}_{proc}$两步转换过程的
 前向模拟性质进行证明。
 这两步转换的前向模拟证明结构相似，不过前者是使用多步模拟进行程序内部执行步骤的模拟，
-而后者是使用星形模拟进行程序内部执行步骤的模拟。我们在第~\ref{sec:compcertbackend}节中
+而后者是使用星形模拟进行程序内部执行步骤的模拟。本文在第~\ref{sec:compcertbackend}节中
 对这两种模拟进行过介绍。另外，由于CPS是函数式语言而SSA是
 命令式语言，第二步转换源语言与目标语言的程序状态构成差异更大，它们之间的不变式定义也更为复杂。
 
@@ -54,7 +54,7 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 
 \subsection{直接风格与CPS程序状态关系的不变式}
 
-我们已经在第\ref{sec:cpstrans}节中讨论了将直接风格的PCF程序转换为CPS形式的CPS转换算法。
+本文已经在第\ref{sec:cpstrans}节中讨论了将直接风格的PCF程序转换为CPS形式的CPS转换算法。
 直接风格的PCF语言和与CPS语言之间的程序状态的不变式$\sim$关系在图\ref{simrelationcps}中定义如下。
 如第~\ref{sec:smallop}中的介绍，一种程序语言可以有多种不同的正确小步操作语义。
 我们为直接风格的PCF程序定义了保存上下文信息的语义，正是为了更方便地将其与CPS程序状态关联起来。
@@ -149,7 +149,7 @@ Comp(t_{pcf}) = \mathcal{G}_{proc}(\mathcal{F}_{proc}(t_{pcf})).
 \end{equation}
 
 PCF和转换得到的CPS程序初始程序状态需满足上一节中所定义的不变式，即满足定理~\ref{def:fsimcps}。
-在程序内部执行步骤的模拟中，我们使用多步模拟（Plus Simulation）来关联PCF和CPS程序状态的转换过程。
+在程序内部执行步骤的模拟中，本文使用多步模拟（Plus Simulation）来关联PCF和CPS程序状态的转换过程。
 在多步模拟中，PCF源程序走一步，CPS目标程序不会停留在原地，所以不必担心无限驻留（Infinite Stuttering）问题。
 正如定理~\ref{def:fsimcps2}所示，
 当PCF程序的状态在一步后到达$S'_{pcf}$，$S_{cps}$经过一步或多步转换到达$S'_{cps}$，
@@ -331,7 +331,7 @@ $\sim$关系并在整个程序执行过程中仍然能保持匹配，那么$t_{c
 定理\ref{def:fsimssa}说明了在CPS和SSA程序初始状态时，$\sim$关系成立。我们直观地对该定理进行定义展开即可证明。
 定理\ref{trm:simustep2}说明了$\sim$关系在程序内部执行步骤中仍然成立。
 
-我们通过对$S_{cps}\rightarrow S'_{cps}$的一步转换进行归纳来证明定理~\ref{trm:simustep2}。
+本文通过对$S_{cps}\rightarrow S'_{cps}$的一步转换进行归纳来证明定理~\ref{trm:simustep2}。
 在$S_{cps}\rightarrow S'_{cps}$的每一种情况下，也就是对于每一个子目标，
 我们构造一个与$S'_{cps}$满足$\sim$关系的$S'_{ssa}$，
 且能够从$S_{ssa}$经过若干步转换到达$S'_{ssa}$。
