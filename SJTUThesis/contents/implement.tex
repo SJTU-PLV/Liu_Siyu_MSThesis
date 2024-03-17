@@ -235,26 +235,11 @@ Coq中各主要模块类别和内容的代码行数（Lines of Code, LOC）如�
 工具使用了提供操作语义版本的Vellvm~\cite{vellvm2012}。
 LOC统计不包含这些使用他人工作的子模块代码。
 
-本文的主要工作在于对转换算法的正确性进行形式化验证，这一点在LOC分析中也有所体现。
-验证占据了本文代码量的大部分，其主要包括了不同语言程序状态匹配关系的定义和语义保存性质的相关定理证明。
-由此可见，函数式编译器前端的优化不是本文的研究重点，所以本文忽略了针对CPS程序的分析和优化。
-代码实现部分中用Coq实现的PCF编译器是一个研究用的编译器原型，它是一个与LLVM后端连接的高可靠
-函数式编译器，为构建更完备的工业级高可靠函数式编译器提供了基础和参考。
-在对该编译器原型进行测试和分析时，由于缺少基于LLVM后端的PCF编译器，我们选择使用Clang将同等
-功能的C语言程序编译到LLVM IR进行对比测试~\cite{lattner2008llvm}。
-使用阶乘等简易的PCF程序作为源程序，其编译后得到的LLVM IR程序在LLVM中经过后端编译得到可执行程序。
-它们的运行速度比直接使用Clang编译同样功能C语言版本的源程序慢最多3倍。
-本文未将函数式编译器前端的性能提升作为工作重点，但是由于LLVM后端编译过程中会完成许多
-分析与优化，最终可执行程序的运行速度相差不是很大。
-如果能在从函数式源程序编译到LLVM IR的过程中针对CPS程序进行更多控制流分析与优化，
-编译得到的程序执行速度和目前相比会有所提升。
-高可靠函数式编译器前端的性能优化是未来可以研究的方向，其与LLVM后端优化的结合会使程序性能得到进一步加强。
-
 \begin{table}
     \linespread{1.25}
     \small
     \centering
-    % \vspace{-20pt}
+    \vspace{3ex}
     \caption{Coq代码LOC评估}\label{tabeval}
     \begin{center}
     \begin{tabular}{|l|l|l|l|}
@@ -278,3 +263,56 @@ LOC统计不包含这些使用他人工作的子模块代码。
     \end{center}
 \end{table}
 
+本文的主要工作在于对转换算法的正确性进行形式化验证，这一点在LOC分析中也有所体现。
+验证占据了本文代码量的大部分，其主要包括了不同语言程序状态匹配关系的定义和语义保存性质的相关定理证明。
+由此可见，函数式编译器前端的优化不是本文的研究重点，所以本文忽略了针对CPS程序的分析和优化。
+代码实现部分中用Coq实现的PCF编译器是一个研究用的编译器原型，它是一个与LLVM后端连接的高可靠
+函数式编译器，为构建更完备的工业级高可靠函数式编译器提供了基础和参考。
+在对该编译器原型进行测试和分析时，由于缺少基于LLVM后端的PCF编译器，我们选择使用Clang将同等
+功能的C语言程序编译到LLVM IR进行对比测试~\cite{lattner2008llvm}。
+例如，使用计算阶乘的PCF程序作为源程序，其编译后得到的LLVM IR程序在LLVM中经过后端编译得到可执行程序。
+该测试源程序如图~\ref{facttest}，均为递归计算1000的阶乘。
+在使用苹果M1芯片及8G内存的机器上进行测试，C语言版本经过Clang编译
+的运行速度为$3.3\times 10^{-5}\; s$。而PCF版本经过本文中编译链得到的
+可执行程序运行速度为$1.3\times 10^{-4}\; s$，
+它的运行速度比直接使用Clang编译同样功能C语言版本的源程序慢约3倍。
+
+本文未将函数式编译器前端的性能提升作为工作重点，但是由于LLVM后端编译过程中会完成许多
+分析与优化，最终可执行程序的运行速度相差不是很大。
+如果能在从函数式源程序编译到LLVM IR的过程中针对CPS程序进行更多控制流分析与优化，
+编译得到的程序执行速度和目前相比会有所提升。
+高可靠函数式编译器前端的性能优化是未来可以研究的方向，其与LLVM后端优化的结合会使程序性能得到进一步加强。
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.42\textwidth}
+        \flushright
+    % \small
+    \begin{equation}
+        \nonumber
+        \begin{aligned}
+        & (\mathbf{fix}\; fact\; x \\
+        & \quad \mathbf{ifz}\; x\; 1 \\
+        & \quad\quad (x*(fact\; (x-1)))) \\
+        & 1000
+        \end{aligned}
+    \end{equation}
+    \caption{PCF语言阶乘程序}\label{pcffacttest}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.55\textwidth}
+        \flushleft
+        % \small
+    \begin{equation}
+        \nonumber
+        \begin{aligned}
+        & \mathbf{int}\; fact\; (\mathbf{int}\; x)\; \{ \\
+        & \quad \mathbf{if}\; (x == 0)\; \mathbf{return}\; 1; \\
+        & \quad\quad \mathbf{else}\; \mathbf{return}\; x*fact(x-1);\; \} \\
+        & \mathbf{int}\; main\; ()\; \{ \\
+        & \quad \mathbf{return}\; fact(1000);\; \}
+        \end{aligned}
+    \end{equation}
+    \caption{C语言阶乘程序}\label{ccpstest}
+    \end{subfigure}
+\caption{PCF语言和C语言版本的阶乘程序}\label{facttest}
+\end{figure}
